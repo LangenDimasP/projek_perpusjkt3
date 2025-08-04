@@ -1,0 +1,12 @@
+RewriteEngine On
+
+# Prevent direct access to api.php for non-API requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^api$ api.php [L,QSA]
+
+# Redirect /naik_kelas to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^naik_kelas$ index.html [L,QSA]
+
+# Set index.html as the default directory index
+DirectoryIndex index.html
