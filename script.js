@@ -98,14 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
         function updateSelectedPreviewNoClass() {
-        const preview = document.getElementById('selected-preview-no-class');
-        if (!preview) return;
-        if (selectedStudents.length > 0) {
-            preview.textContent = `Siswa terpilih: ${selectedStudents.length}`;
-        } else {
-            preview.textContent = '';
+            const preview = document.getElementById('selected-preview-no-class');
+            if (!preview) return;
+            if (selectedStudents.length > 0) {
+                // Ambil nama unik
+                const uniqueNames = [...new Set(selectedStudents.map(s => s.Fullname))];
+                preview.innerHTML = `Siswa terpilih: ${uniqueNames.length}<br><span class="text-xs text-gray-600">${uniqueNames.join(', ')}</span>`;
+            } else {
+                preview.textContent = '';
+            }
         }
-    }
 
     // Update UI based on login status
     function updateUI() {
@@ -147,12 +149,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    tabTambahKelas.addEventListener('click', () => switchTab('tambah-kelas'));
-    tabNaikKelas.addEventListener('click', () => switchTab('naik-kelas'));
-    tabBeriKelas.addEventListener('click', () => switchTab('beri-kelas'));
+    tabTambahKelas.addEventListener('click', () => {
+        switchTab('tambah-kelas');
+        localStorage.setItem('activeTab', 'tambah-kelas');
+    });
+    tabNaikKelas.addEventListener('click', () => {
+        switchTab('naik-kelas');
+        localStorage.setItem('activeTab', 'naik-kelas');
+    });
+    tabBeriKelas.addEventListener('click', () => {
+        switchTab('beri-kelas');
+        localStorage.setItem('activeTab', 'beri-kelas');
+        // Tampilkan semua siswa tanpa kelas saat tab dibuka
+        const promise = fetch(`${API_URL}?action=get_members_no_class`);
+        displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
+    });
 
-    // Initialize with Tambah Kelas tab active
-    switchTab('tambah-kelas');
+    // Inisialisasi tab aktif dari localStorage jika ada
+    const savedTab = localStorage.getItem('activeTab') || 'tambah-kelas';
+    switchTab(savedTab);
+    if (savedTab === 'beri-kelas') {
+        const promise = fetch(`${API_URL}?action=get_members_no_class`);
+        displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
+    }
 
     // Login Button Event
     loginBtn.addEventListener('click', async () => {
@@ -513,78 +532,91 @@ document.addEventListener('DOMContentLoaded', () => {
             const memberName = checkbox.nextElementSibling.textContent.trim();
             const memberKelasId = checkbox.getAttribute('data-kelas-id');
     
-            if (checkbox.checked) {
-                // Cek apakah siswa sudah diceklis sebelumnya
-                if (selectedNaikKelas.some(s => s.ID === memberId)) {
-                    checkbox.checked = false;
-    
-                    // Tampilkan popup
-                    const confirmModal = document.getElementById('confirm-modal');
-                    const confirmMessage = document.getElementById('confirm-message');
-                    const confirmProceed = document.getElementById('confirm-proceed');
-                    const confirmCancel = document.getElementById('confirm-cancel');
-    
-                    confirmMessage.textContent = 'Siswa ini sudah dipilih sebelumnya.';
-                    confirmModal.classList.remove('hidden');
-                    confirmModal.classList.add('opacity-100');
-    
-                    await new Promise((resolve) => {
-                        confirmProceed.onclick = () => {
-                            confirmModal.classList.add('hidden');
-                            confirmModal.classList.remove('opacity-100');
-                            resolve();
-                        };
-                        confirmCancel.onclick = () => {
-                            confirmModal.classList.add('hidden');
-                            confirmModal.classList.remove('opacity-100');
-                            resolve();
-                        };
-                    });
-    
-                    return;
+            if (isNoClass) {
+                // === MODE BERI KELAS ===
+                if (checkbox.checked) {
+                    if (!selectedStudents.some(s => s.ID === memberId)) {
+                        selectedStudents.push({ ID: memberId, Fullname: memberName });
+                    }
+                } else {
+                    selectedStudents = selectedStudents.filter(s => s.ID !== memberId);
                 }
-    
-                // Jika belum ada yang diceklis, simpan kelasId
-                if (selectedNaikKelas.length === 0) {
-                    selectedKelasId = memberKelasId;
-                }
-                // Jika sudah ada, pastikan kelasId sama
-                if (memberKelasId !== selectedKelasId) {
-                    checkbox.checked = false;
-    
-                    // Tampilkan popup konfirmasi
-                    const confirmModal = document.getElementById('confirm-modal');
-                    const confirmMessage = document.getElementById('confirm-message');
-                    const confirmProceed = document.getElementById('confirm-proceed');
-                    const confirmCancel = document.getElementById('confirm-cancel');
-    
-                    confirmMessage.textContent = 'Anda hanya bisa memilih siswa dari kelas yang sama. Silakan hapus pilihan sebelumnya jika ingin memilih dari kelas lain.';
-                    confirmModal.classList.remove('hidden');
-                    confirmModal.classList.add('opacity-100');
-    
-                    await new Promise((resolve) => {
-                        confirmProceed.onclick = () => {
-                            confirmModal.classList.add('hidden');
-                            confirmModal.classList.remove('opacity-100');
-                            resolve();
-                        };
-                        confirmCancel.onclick = () => {
-                            confirmModal.classList.add('hidden');
-                            confirmModal.classList.remove('opacity-100');
-                            resolve();
-                        };
-                    });
-    
-                    return;
-                }
-                selectedNaikKelas.push({ ID: memberId, Fullname: memberName, KelasId: memberKelasId });
+                updateSelectedPreviewNoClass();
             } else {
-                selectedNaikKelas = selectedNaikKelas.filter(s => s.ID !== memberId);
-                if (selectedNaikKelas.length === 0) {
-                    selectedKelasId = null;
+                // === MODE NAIK KELAS ===
+                if (checkbox.checked) {
+                    // Cek apakah siswa sudah diceklis sebelumnya
+                    if (selectedNaikKelas.some(s => s.ID === memberId)) {
+                        checkbox.checked = false;
+    
+                        // Tampilkan popup
+                        const confirmModal = document.getElementById('confirm-modal');
+                        const confirmMessage = document.getElementById('confirm-message');
+                        const confirmProceed = document.getElementById('confirm-proceed');
+                        const confirmCancel = document.getElementById('confirm-cancel');
+    
+                        confirmMessage.textContent = 'Siswa ini sudah dipilih sebelumnya.';
+                        confirmModal.classList.remove('hidden');
+                        confirmModal.classList.add('opacity-100');
+    
+                        await new Promise((resolve) => {
+                            confirmProceed.onclick = () => {
+                                confirmModal.classList.add('hidden');
+                                confirmModal.classList.remove('opacity-100');
+                                resolve();
+                            };
+                            confirmCancel.onclick = () => {
+                                confirmModal.classList.add('hidden');
+                                confirmModal.classList.remove('opacity-100');
+                                resolve();
+                            };
+                        });
+    
+                        return;
+                    }
+    
+                    // Jika belum ada yang diceklis, simpan kelasId
+                    if (selectedNaikKelas.length === 0) {
+                        selectedKelasId = memberKelasId;
+                    }
+                    // Jika sudah ada, pastikan kelasId sama
+                    if (memberKelasId !== selectedKelasId) {
+                        checkbox.checked = false;
+    
+                        // Tampilkan popup konfirmasi
+                        const confirmModal = document.getElementById('confirm-modal');
+                        const confirmMessage = document.getElementById('confirm-message');
+                        const confirmProceed = document.getElementById('confirm-proceed');
+                        const confirmCancel = document.getElementById('confirm-cancel');
+    
+                        confirmMessage.textContent = 'Anda hanya bisa memilih siswa dari kelas yang sama. Silakan hapus pilihan sebelumnya jika ingin memilih dari kelas lain.';
+                        confirmModal.classList.remove('hidden');
+                        confirmModal.classList.add('opacity-100');
+    
+                        await new Promise((resolve) => {
+                            confirmProceed.onclick = () => {
+                                confirmModal.classList.add('hidden');
+                                confirmModal.classList.remove('opacity-100');
+                                resolve();
+                            };
+                            confirmCancel.onclick = () => {
+                                confirmModal.classList.add('hidden');
+                                confirmModal.classList.remove('opacity-100');
+                                resolve();
+                            };
+                        });
+    
+                        return;
+                    }
+                    selectedNaikKelas.push({ ID: memberId, Fullname: memberName, KelasId: memberKelasId });
+                } else {
+                    selectedNaikKelas = selectedNaikKelas.filter(s => s.ID !== memberId);
+                    if (selectedNaikKelas.length === 0) {
+                        selectedKelasId = null;
+                    }
                 }
+                updateSelectedPreview();
             }
-            updateSelectedPreview();
         });
     });
             
@@ -622,17 +654,21 @@ document.addEventListener('DOMContentLoaded', () => {
     searchStudentNoClassInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         const query = searchStudentNoClassInput.value.trim();
-
+    
         if (query.length >= 2) {
             debounceTimer = setTimeout(() => {
                 const promise = fetch(`${API_URL}?action=get_members_no_class&search_query=${encodeURIComponent(query)}`);
                 displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
             }, 500);
         } else {
-            // Display only selected students if query is less than 2 characters
-            displayMembers(Promise.resolve({ ok: true, json: () => Promise.resolve(selectedStudents) }), studentNoClassListDiv, studentNoClassSelectionArea, true);
+            // Tampilkan semua siswa tanpa kelas jika input kosong atau kurang dari 2 karakter
+            debounceTimer = setTimeout(() => {
+                const promise = fetch(`${API_URL}?action=get_members_no_class`);
+                displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
+            }, 500);
         }
     });
+    
 
     // Select All Checkbox Event (Naik Kelas)
     selectAllCheckbox.addEventListener('change', () => {
