@@ -22,14 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const namaKelasInput = document.getElementById('nama-kelas-input');
     const tambahKelasBtn = document.getElementById('tambah-kelas-btn');
-    const loginForm = document.getElementById('login-form');
     const tambahKelasForm = document.getElementById('tambah-kelas-form');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const loginBtn = document.getElementById('login-btn');
     const userStatus = document.getElementById('user-status');
     const userFullname = document.getElementById('user-fullname');
-    const logoutBtn = document.getElementById('logout-btn');
+    const logoutBtn = document.querySelector('a[href="logout.php"]');
     
     const prosesBtn = document.getElementById('proses-btn');
     const beriKelasBtn = document.getElementById('beri-kelas-btn');
@@ -50,7 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const naikKelasContent = document.getElementById('naik-kelas-content');
     const beriKelasContent = document.getElementById('beri-kelas-content');
 
-    const API_URL = 'api.php';
+    const BASE_URL = '../';  // Untuk navigasi ke folder utama
+    const API_URL = `${BASE_URL}api.php`;  // Gabungkan dengan nama file API
     let debounceTimer;
     let kelasDebounceTimer;
     let selectedStudents = []; // Store selected students for Beri Kelas
@@ -64,23 +61,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let selectedNaikKelas = []; // [{ID, Fullname}]
     let selectedKelasId = null; // Untuk menyimpan kelas asal siswa yang diceklis
+
     
 
     // Check login status on page load
     async function checkLoginStatus() {
         try {
             const response = await fetch(`${API_URL}?action=check_login`);
-            if (!response.ok) throw new Error('Gagal memeriksa status login.');
+            if (!response.ok) {
+                throw new Error('Gagal memeriksa status login.');
+            }
             const result = await response.json();
+            
             isLoggedIn = result.isLoggedIn;
             currentUser = result.user;
-            updateUI();
+    
+            // Update UI elements only if they exist
+            if (!isLoggedIn) {
+                window.location.href = '../login.php';
+                return;
+            }
+
+            // Show content for logged in users
+            if (tambahKelasForm) {
+                tambahKelasForm.classList.remove('hidden');
+            }
         } catch (error) {
-            // showStatus(error.message, 'error'); // HAPUS atau KOMEN baris ini
+            console.error('Error checking login status:', error);
+            showStatus('Gagal memeriksa status login: ' + error.message, 'error');
+            
+            // Reset login state
             isLoggedIn = false;
             currentUser = null;
-            updateUI();
+            
+            // Redirect to login page on error
+            window.location.href = '../login.php';
         }
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'logout' })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+    
+                isLoggedIn = false;
+                currentUser = null;
+                userFullname.textContent = '';
+                userStatus.classList.add('hidden');
+                showStatus('Logout berhasil.', 'success');
+    
+                // Redirect ke halaman login setelah logout sukses
+                setTimeout(() => {
+                    window.location.href = 'login';
+                }, 1000);
+            } catch (error) {
+                showStatus(error.message, 'error');
+            }
+        });
     }
 
         // Tambahkan fungsi ini di dalam DOMContentLoaded:
@@ -109,20 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-    // Update UI based on login status
-    function updateUI() {
-        if (isLoggedIn && currentUser) {
-            loginForm.classList.add('hidden');
-            tambahKelasForm.classList.remove('hidden');
-            userStatus.classList.remove('hidden');
-            userFullname.textContent = currentUser.Fullname;
-        } else {
-            loginForm.classList.remove('hidden');
-            tambahKelasForm.classList.add('hidden');
-            userStatus.classList.add('hidden');
-            userFullname.textContent = '';
-        }
-    }
 
     // Tab Switching
     function switchTab(tab) {
@@ -135,10 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
         tambahKelasContent.classList.add('hidden');
         naikKelasContent.classList.add('hidden');
         beriKelasContent.classList.add('hidden');
-
+    
         if (tab === 'tambah-kelas') {
             tabTambahKelas.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
             tambahKelasContent.classList.remove('hidden');
+            // TAMPILKAN FORM TAMBAH KELAS
+            tambahKelasForm.classList.remove('hidden');
             checkLoginStatus();
         } else if (tab === 'naik-kelas') {
             tabNaikKelas.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
@@ -173,49 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
         displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
     }
 
-    // Login Button Event
-    loginBtn.addEventListener('click', async () => {
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value.trim();
-
-        if (!username || !password) {
-            showStatus('Harap masukkan username dan password.', 'error');
-            return;
-        }
-
-        loginBtn.disabled = true;
-        loginBtn.innerHTML = `
-            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            <span>Memproses...</span>
-        `;
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', username, password })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message);
-
-            isLoggedIn = true;
-            currentUser = result.user;
-            updateUI();
-            showStatus('Login berhasil.', 'success');
-        } catch (error) {
-            showStatus(error.message, 'error');
-        } finally {
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = `
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                </svg>
-                <span>Login</span>
-            `;
-            usernameInput.value = '';
-            passwordInput.value = '';
-        }
-    });
 
     // Logout Button Event
     logoutBtn.addEventListener('click', async () => {
@@ -227,10 +215,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message);
-
+    
             isLoggedIn = false;
             currentUser = null;
-            updateUI();
+            userFullname.textContent = '';
+            userStatus.classList.add('hidden'); // SEMBUNYIKAN
             showStatus('Logout berhasil.', 'success');
         } catch (error) {
             showStatus(error.message, 'error');

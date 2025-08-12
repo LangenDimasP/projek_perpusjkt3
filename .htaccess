@@ -1,12 +1,22 @@
 RewriteEngine On
 
-# Prevent direct access to api.php for non-API requests
+# Check session and redirect to login if not logged in
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^api$ api.php [L,QSA]
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/$
+RewriteCond %{HTTP_COOKIE} !PHPSESSID [NC]
+RewriteRule ^ /views/login.php [L,R]
 
-# Redirect /naik_kelas to index.html
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^naik_kelas$ index.html [L,QSA]
+# Allow access to existing files and directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
-# Set index.html as the default directory index
-DirectoryIndex index.html
+# Remove .php and .html extension (internally rewrite)
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L]
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+# Set index.php as default
+DirectoryIndex index.php

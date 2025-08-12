@@ -1,7 +1,7 @@
 <?php
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(0);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 session_start();
 
@@ -28,6 +28,11 @@ if ($mysqli->connect_error) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     header('Content-Type: application/json');
     
+    if (!isset($_GET['action'])) {
+        http_response_code(400);
+        echo json_encode(['message' => 'Parameter action diperlukan.']);
+        exit;
+    }
     switch ($_GET['action']) {
         case 'search_kelas':
             $searchQuery = isset($_GET['query']) ? $_GET['query'] : '';
@@ -127,8 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['message' => 'Username dan password diperlukan.']);
                 exit;
             }
-        
-            $stmt = $mysqli->prepare("SELECT ID, Fullname, password_hash FROM users WHERE username = ? AND IsActive = 1");
+            $stmt = $mysqli->prepare("SELECT ID, Fullname, password_hash, password FROM users WHERE username = ? AND IsActive = 1");
             if (!$stmt) {
                 http_response_code(500);
                 echo json_encode(['message' => 'Prepare failed: ' . $mysqli->error]);
@@ -139,18 +143,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $stmt->get_result();
             $user = $result->fetch_assoc();
             
-            if ($user && password_verify($password, $user['password_hash'])) {
+            $isValid = false;
+            if ($user) {
+                if (!empty($user['password_hash'])) {
+                    $isValid = password_verify($password, $user['password_hash']);
+                } elseif (!empty($user['password'])) {
+                    // Cek SHA1
+                    $isValid = (sha1($password) === $user['password']);
+                }
+            }
+            
+            if ($isValid) {
                 $_SESSION['user_id'] = $user['ID'];
                 echo json_encode(['message' => 'Login berhasil.', 'user' => ['ID' => $user['ID'], 'Fullname' => $user['Fullname']]]);
             } else {
                 http_response_code(401);
                 echo json_encode(['message' => 'Username atau password salah.']);
             }
+            // ...existing code...
             break;
 
         case 'logout':
             session_unset();
             session_destroy();
+            if (ini_get("session.use_cookies")) {
+                $params = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000,
+                    $params["path"], $params["domain"],
+                    $params["secure"], $params["httponly"]
+                );
+            }
             echo json_encode(['message' => 'Logout berhasil.']);
             break;
 

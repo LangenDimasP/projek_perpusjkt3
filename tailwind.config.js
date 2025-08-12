@@ -19,8 +19,9 @@ module.exports = {
     }
   },
   content: [
-    './index.html',
-    './script.js'
+    './**/*.html', // semua HTML
+    './**/*.php',  // semua PHP
+    './**/*.js'    // kalau ada JS
   ],
   plugins: []
 }
