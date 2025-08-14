@@ -12,9 +12,9 @@ if(isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <title>Login - Sistem Kenaikan Kelas</title>
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/logo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/logo.png">
-    <link href="../dist/output.css" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/logo.png">
+    <link href="dist/output.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 min-h-screen flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
@@ -41,7 +41,7 @@ if(isset($_SESSION['user_id'])) {
         
                 <!-- Logo 3: PNG with circle -->
                 <div class="w-16 h-16 bg-white shadow-xl rounded-full flex items-center justify-center">
-                    <img src="../assets/images/logo.png" alt="Logo" class="w-12 h-12">
+                    <img src="assets/images/logo.png" alt="Logo" class="w-12 h-12">
                 </div>
             </div>
             <h2 class="text-lg font-bold text-center text-gray-800">INLISLite QuickAccess</h2>
@@ -75,7 +75,7 @@ if(isset($_SESSION['user_id'])) {
         }
         document.getElementById('login-btn').disabled = true;
         try {
-            const response = await fetch('../api.php', {
+            const response = await fetch('api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'login', username, password })

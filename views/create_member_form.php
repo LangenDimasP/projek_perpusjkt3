@@ -374,6 +374,12 @@ try {
                                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                                                 <?php echo htmlspecialchars($member['JenisAnggota']); ?>
                                                             </span>
+                                                            <button
+                                                                class="ml-2 px-2 py-1 bg-yellow-400 text-white rounded text-xs hover:bg-yellow-500"
+                                                                onclick="cekDefault('<?php echo $member['MemberNo']; ?>', '<?php echo addslashes($member['Fullname']); ?>')"
+                                                                title="Cek Default Koleksi & Lokasi">
+                                                                Cek Default
+                                                            </button>
                                                         </td>
                                                         <td class="px-6 py-4 whitespace-nowrap">
                                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -401,147 +407,184 @@ try {
                     </div>
                 </div>
             </div>
+                <div id="cekDefaultModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-2" id="cekDefaultTitle"></h3>
+            <div id="cekDefaultContent" class="mb-4"></div>
+            <button onclick="closeCekDefaultModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Tutup</button>
+        </div>
+    </div>
+</body>
         </main>
     </div>
 
     <script>
-        // Initialize Feather Icons
+// Initialize Feather Icons
+feather.replace();
+
+// Tab switching
+function openTab(evt, tabName) {
+    var tabcontent = document.getElementsByClassName("tab-content");
+    for (var i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.add("hidden");
+    }
+    var tabbuttons = document.getElementsByClassName("tab-button");
+    for (var i = 0; i < tabbuttons.length; i++) {
+        tabbuttons[i].classList.remove("border-blue-600", "text-blue-600", "bg-blue-50");
+        tabbuttons[i].classList.add("border-transparent", "text-gray-600");
+    }
+    document.getElementById(tabName).classList.remove("hidden");
+    evt.currentTarget.classList.add("border-blue-600", "text-blue-600", "bg-blue-50");
+    evt.currentTarget.classList.remove("border-transparent", "text-gray-600");
+}
+
+// Open default tab
+document.getElementById("defaultOpen").click();
+
+// Toast functions
+function showToast(message) {
+    const toast = document.getElementById('toast-success');
+    const messageEl = document.getElementById('toast-success-message');
+    messageEl.textContent = message;
+    toast.classList.remove('hidden', 'translate-x-full');
+    toast.classList.add('translate-x-0');
+    setTimeout(() => {
+        hideToast();
+    }, 3000);
+}
+
+function hideToast() {
+    const toast = document.getElementById('toast-success');
+    toast.classList.add('translate-x-full');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('translate-x-0');
+    }, 300);
+}
+
+// Form submission
+document.getElementById('memberForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>Menyimpan...';
+    feather.replace();
+
+    const formData = new FormData(this);
+    fetch('../create_member_api.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'Member berhasil ditambahkan.') {
+            showToast(`Member berhasil ditambahkan!\nNomor Anggota: ${data.member_no}`);
+            this.reset();
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            throw new Error(data.message || 'Unknown error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
         feather.replace();
-        
-        function openTab(evt, tabName) {
-            var i, tabcontent, tabbuttons;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].classList.add("hidden");
-            }
-            tabbuttons = document.getElementsByClassName("tab-button");
-            for (i = 0; i < tabbuttons.length; i++) {
-                tabbuttons[i].classList.remove("border-blue-600", "text-blue-600", "bg-blue-50");
-                tabbuttons[i].classList.add("border-transparent", "text-gray-600");
-            }
-            document.getElementById(tabName).classList.remove("hidden");
-            evt.currentTarget.classList.add("border-blue-600", "text-blue-600", "bg-blue-50");
-            evt.currentTarget.classList.remove("border-transparent", "text-gray-600");
+    });
+});
+
+// Form validation
+document.querySelectorAll('.form-input, .form-select').forEach(element => {
+    element.addEventListener('focus', function() {
+        this.classList.add('ring-2', 'ring-blue-500', 'border-blue-500');
+    });
+    element.addEventListener('blur', function() {
+        this.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500');
+        if (this.hasAttribute('required') && !this.value) {
+            this.classList.add('border-red-500');
+        } else {
+            this.classList.remove('border-red-500');
         }
+    });
+});
 
-        // Open the default tab
-        document.getElementById("defaultOpen").click();
-
-        function showToast(message) {
-            const toast = document.getElementById('toast-success');
-            const messageEl = document.getElementById('toast-success-message');
-            messageEl.textContent = message;
-            
-            toast.classList.remove('hidden', 'translate-x-full');
-            toast.classList.add('translate-x-0');
-            
-            setTimeout(() => {
-                hideToast();
-            }, 3000);
-        }
-
-        function hideToast() {
-            const toast = document.getElementById('toast-success');
-            toast.classList.add('translate-x-full');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-                toast.classList.remove('translate-x-0');
-            }, 300);
-        }
-
-        // Form submission handler
-        document.getElementById('memberForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>Menyimpan...';
-            feather.replace();
-            
-            const formData = new FormData(this);
-            
-            fetch('../create_member_api.php', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Member berhasil ditambahkan.') {
-                    showToast(`Member berhasil ditambahkan!\nNomor Anggota: ${data.member_no}`);
-                    this.reset(); // Reset form
-                    setTimeout(() => {
-                        window.location.reload(); // Reload to update member list
-                    }, 2000);
-                } else {
-                    throw new Error(data.message || 'Unknown error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error: ' + error.message);
-            })
-            .finally(() => {
-                // Reset button state
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-                feather.replace();
+// Search functionality
+function setupSearch() {
+    const searchInput = document.querySelector('input[placeholder="Cari anggota..."]');
+    const tableRows = document.querySelectorAll('#member-list tbody tr');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            tableRows.forEach(row => {
+                if (row.children.length === 1) return;
+                const memberNo = row.children[0].textContent.toLowerCase();
+                const fullname = row.children[1].textContent.toLowerCase();
+                const phone = row.children[3].textContent.toLowerCase();
+                const matches = memberNo.includes(searchTerm) || fullname.includes(searchTerm) || phone.includes(searchTerm);
+                row.style.display = matches ? '' : 'none';
             });
         });
+    }
+}
 
-        // Form validation enhancements
-        document.querySelectorAll('.form-input, .form-select').forEach(element => {
-            element.addEventListener('focus', function() {
-                this.classList.add('ring-2', 'ring-blue-500', 'border-blue-500');
-            });
-            
-            element.addEventListener('blur', function() {
-                this.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500');
-                if (this.hasAttribute('required') && !this.value) {
-                    this.classList.add('border-red-500');
-                } else {
-                    this.classList.remove('border-red-500');
-                }
-            });
-        });
+// Cek Default function
+function cekDefault(memberNo, fullname) {
+    document.getElementById('cekDefaultModal').classList.remove('hidden');
+    document.getElementById('cekDefaultTitle').textContent = 'Cek Default: ' + fullname + ' (' + memberNo + ')';
+    document.getElementById('cekDefaultContent').innerHTML = 'Memuat...';
 
-        // Search functionality for member list
-        function setupSearch() {
-            const searchInput = document.querySelector('input[placeholder="Cari anggota..."]');
-            const tableRows = document.querySelectorAll('#member-list tbody tr');
-            
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    
-                    tableRows.forEach(row => {
-                        if (row.children.length === 1) return; // Skip empty state row
-                        
-                        const memberNo = row.children[0].textContent.toLowerCase();
-                        const fullname = row.children[1].textContent.toLowerCase();
-                        const phone = row.children[3].textContent.toLowerCase();
-                        
-                        const matches = memberNo.includes(searchTerm) || 
-                                      fullname.includes(searchTerm) || 
-                                      phone.includes(searchTerm);
-                        
-                        row.style.display = matches ? '' : 'none';
-                    });
+    fetch('../jenis_anggota.api.php?action=cek_default_member&member_no=' + encodeURIComponent(memberNo))
+        .then(response => response.json())
+        .then(data => {
+            let html = '<b>Kategori Koleksi:</b><ul>';
+            // Tampilkan hanya yang statusnya "Default"
+            const defaultCategories = data.categories.filter(cat => cat.Status === 'Default');
+            if (defaultCategories.length > 0) {
+                defaultCategories.forEach(function(cat) {
+                    html += '<li>' + cat.Name + '</li>';
                 });
+            } else {
+                html += '<li class="text-red-500">Belum ada default koleksi</li>';
             }
-        }
-
-        // Setup search when member list tab is opened
-        document.querySelector('button[onclick*="member-list"]').addEventListener('click', function() {
-            setTimeout(setupSearch, 100);
+            html += '</ul><b>Lokasi Perpustakaan:</b><ul>';
+            const defaultLocations = data.locations.filter(loc => loc.Status === 'Default');
+            if (defaultLocations.length > 0) {
+                defaultLocations.forEach(function(loc) {
+                    html += '<li>' + loc.Name + '</li>';
+                });
+            } else {
+                html += '<li class="text-red-500">Belum ada default lokasi</li>';
+            }
+            html += '</ul>';
+            document.getElementById('cekDefaultContent').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('cekDefaultContent').innerHTML = '<span class="text-red-500">Gagal memuat data.</span>';
         });
+}
+
+function closeCekDefaultModal() {
+    document.getElementById('cekDefaultModal').classList.add('hidden');
+}
+
+// Setup search when member list tab is opened
+document.querySelector('button[onclick*="member-list"]').addEventListener('click', function() {
+    setTimeout(setupSearch, 100);
+});
+
     </script>
-</body>
+        <!-- Modal Cek Default -->
+
 </html>
 <?php
 $identity_types->free_result();

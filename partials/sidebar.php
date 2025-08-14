@@ -89,6 +89,13 @@ $baseUrl = $isInViewsFolder ? '../' : '';
             </svg>
             <span class="truncate">Stock Opname</span>
         </a>
+                <a href="<?php echo $baseUrl; ?>views/jenis_anggota.php" class="flex items-center px-3 py-2 rounded-lg transition-colors duration-200
+            <?php echo (strpos($_SERVER['PHP_SELF'], 'jenis_anggota.php') !== false) ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-gray-200'; ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m0-4a4 4 0 118 0 4 4 0 01-8 0z" />
+            </svg>
+            <span>Jenis Anggota</span>
+        </a>
     </nav>
 
     <!-- User Info & Logout -->
