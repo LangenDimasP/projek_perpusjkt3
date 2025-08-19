@@ -49,7 +49,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
         .tab-active {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: #4f46e5;
             color: white;
         }
         .disabled-tab { 
@@ -84,7 +84,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
         <div class="container mx-auto max-w-7xl">
             <!-- Header Section -->
             <div class="mb-8">
-                <div class="gradient-bg rounded-2xl p-8 text-white card-shadow">
+                <div class="bg-purple-600 rounded-2xl p-8 text-white card-shadow">
                     <div class="flex items-center space-x-4">
                         <div class="bg-white/20 p-3 rounded-full">
                             <i class="fas fa-users text-2xl"></i>
@@ -143,7 +143,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                 <!-- Tab 1: Daftar Jenis Anggota -->
                 <div id="tab-daftar" class="tab-content">
                     <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+                        <div class="bg-blue-500 p-6">
                             <h3 class="text-xl font-semibold text-white flex items-center">
                                 <i class="fas fa-table mr-3"></i>
                                 Daftar Jenis Anggota
@@ -174,7 +174,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                 <!-- Tab 2: Tambah Jenis Anggota -->
                 <div id="tab-tambah" class="tab-content hidden">
                     <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="bg-gradient-to-r from-green-500 to-teal-600 p-6">
+                        <div class="bg-green-500 p-6">
                             <h3 class="text-xl font-semibold text-white flex items-center">
                                 <i class="fas fa-user-plus mr-3"></i>
                                 Tambah Jenis Anggota Baru
@@ -239,7 +239,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                             </div>
                             
                             <div class="mt-8">
-                                <button type="submit" class="btn-gradient text-white px-8 py-3 rounded-lg font-semibold flex items-center">
+                                <button type="submit" class="bg-green-500 text-white px-8 py-3 rounded-lg font-semibold flex items-center">
                                     <i class="fas fa-plus mr-2"></i>
                                     Tambah Jenis Anggota
                                 </button>
@@ -251,7 +251,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                 <!-- Tab 3: Default Kategori Koleksi -->
                 <div id="tab-default-kategori" class="tab-content hidden">
                     <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
+                        <div class="bg-purple-500 p-6">
                             <h3 class="text-xl font-semibold text-white flex items-center">
                                 <i class="fas fa-tags mr-3"></i>
                                 Pilih Default Kategori Koleksi
@@ -259,6 +259,12 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                         </div>
                         <form id="form-default-kategori" class="p-8">
                             <input type="hidden" id="selected-jenis-id-kategori" name="jenis_id">
+                                <div class="mb-4">
+        <label class="flex items-center cursor-pointer font-semibold text-purple-700">
+            <input type="checkbox" id="select-all-kategori" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 mr-2">
+            Pilih Semua Kategori
+        </label>
+    </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <?php
                                 $collectionCategories2 = $mysqli->query("SELECT * FROM collectioncategorys");
@@ -274,7 +280,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                                 <?php endwhile; ?>
                             </div>
                             <div class="mt-8">
-                                <button type="submit" class="btn-gradient text-white px-8 py-3 rounded-lg font-semibold flex items-center">
+                                <button type="submit" class="bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold flex items-center">
                                     <i class="fas fa-save mr-2"></i>
                                     Simpan Default Kategori
                                 </button>
@@ -286,7 +292,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                 <!-- Tab 4: Default Lokasi Perpustakaan -->
                 <div id="tab-default-lokasi" class="tab-content hidden">
                     <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="bg-gradient-to-r from-teal-500 to-cyan-600 p-6">
+                        <div class="bg-teal-500 p-6">
                             <h3 class="text-xl font-semibold text-white flex items-center">
                                 <i class="fas fa-map-marker-alt mr-3"></i>
                                 Pilih Default Lokasi Perpustakaan
@@ -294,6 +300,12 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                         </div>
                         <form id="form-default-lokasi" class="p-8">
                             <input type="hidden" id="selected-jenis-id-lokasi" name="jenis_id">
+                                <div class="mb-4">
+        <label class="flex items-center cursor-pointer font-semibold text-teal-700">
+            <input type="checkbox" id="select-all-lokasi" class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 mr-2">
+            Pilih Semua Lokasi
+        </label>
+    </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <?php
                                 $locationLibraries2 = $mysqli->query("SELECT * FROM location_library");
@@ -309,7 +321,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                                 <?php endwhile; ?>
                             </div>
                             <div class="mt-8">
-                                <button type="submit" class="btn-gradient text-white px-8 py-3 rounded-lg font-semibold flex items-center">
+                                <button type="submit" class="bg-teal-500 text-white px-8 py-3 rounded-lg font-semibold flex items-center">
                                     <i class="fas fa-save mr-2"></i>
                                     Simpan Default Lokasi
                                 </button>
@@ -577,7 +589,11 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
             var categories = [];
             var checkboxes = document.getElementById('form-default-kategori').getElementsByTagName('input');
             for (var i = 0; i < checkboxes.length; i++) {
-                if (checkboxes[i].type == 'checkbox' && checkboxes[i].checked) {
+                if (
+                    checkboxes[i].type == 'checkbox' &&
+                    checkboxes[i].checked &&
+                    checkboxes[i].id.indexOf('cat-') === 0 // hanya checkbox kategori asli
+                ) {
                     categories.push(checkboxes[i].value);
                 }
             }
@@ -593,6 +609,9 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data = JSON.parse(xhr.responseText);
                     showNotification(data.message, data.success);
+                    if (data.success) {
+                        tabs[0].click(); // Pindah ke tab daftar jenis anggota
+                    }
                     loadSyncMemberTab();
                 }
             };
@@ -604,7 +623,11 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
             var locations = [];
             var checkboxes = document.getElementById('form-default-lokasi').getElementsByTagName('input');
             for (var i = 0; i < checkboxes.length; i++) {
-                if (checkboxes[i].type == 'checkbox' && checkboxes[i].checked) {
+                if (
+                    checkboxes[i].type == 'checkbox' &&
+                    checkboxes[i].checked &&
+                    checkboxes[i].id.indexOf('loc-') === 0 // hanya checkbox lokasi asli
+                ) {
                     locations.push(checkboxes[i].value);
                 }
             }
@@ -620,11 +643,61 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data = JSON.parse(xhr.responseText);
                     showNotification(data.message, data.success);
-                    loadSyncMemberTab();
+                    if (data.success) {
+                        // Pindah ke tab daftar jenis anggota
+                        tabs[0].click();
+                    }
                 }
             };
             xhr.send(JSON.stringify(formData));
         };
+        
+        // Select All Kategori
+        document.getElementById('select-all-kategori').addEventListener('change', function() {
+            var checked = this.checked;
+            var checkboxes = document.getElementById('form-default-kategori').querySelectorAll('input[type="checkbox"][id^="cat-"]');
+            checkboxes.forEach(function(cb) {
+                cb.checked = checked;
+            });
+        });
+        
+        // Select All Lokasi
+        document.getElementById('select-all-lokasi').addEventListener('change', function() {
+            var checked = this.checked;
+            var checkboxes = document.getElementById('form-default-lokasi').querySelectorAll('input[type="checkbox"][id^="loc-"]');
+            checkboxes.forEach(function(cb) {
+                cb.checked = checked;
+            });
+        });
+        
+        // Sinkronkan status select all jika user centang/uncentang manual
+        function syncSelectAllKategori() {
+            var all = document.getElementById('form-default-kategori').querySelectorAll('input[type="checkbox"][id^="cat-"]');
+            var allChecked = Array.from(all).every(cb => cb.checked);
+            document.getElementById('select-all-kategori').checked = allChecked;
+        }
+        function syncSelectAllLokasi() {
+            var all = document.getElementById('form-default-lokasi').querySelectorAll('input[type="checkbox"][id^="loc-"]');
+            var allChecked = Array.from(all).every(cb => cb.checked);
+            document.getElementById('select-all-lokasi').checked = allChecked;
+        }
+        document.getElementById('form-default-kategori').querySelectorAll('input[type="checkbox"][id^="cat-"]').forEach(function(cb) {
+            cb.addEventListener('change', syncSelectAllKategori);
+        });
+        document.getElementById('form-default-lokasi').querySelectorAll('input[type="checkbox"][id^="loc-"]').forEach(function(cb) {
+            cb.addEventListener('change', syncSelectAllLokasi);
+        });
+        
+        // Pastikan status select all sinkron saat fetchDefaults
+        var originalFetchDefaults = fetchDefaults;
+        fetchDefaults = function(id) {
+            originalFetchDefaults(id);
+            setTimeout(function() {
+                syncSelectAllKategori();
+                syncSelectAllLokasi();
+            }, 300);
+        };
+        // ...existing code...
 
         function loadSyncMemberTab() {
             var xhr = new XMLHttpRequest();

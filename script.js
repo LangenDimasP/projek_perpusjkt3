@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tambahKelasForm = document.getElementById('tambah-kelas-form');
     const userStatus = document.getElementById('user-status');
     const userFullname = document.getElementById('user-fullname');
-    const logoutBtn = document.querySelector('a[href="logout.php"]');
+    const logoutBtn = document.getElementById('logout-btn');
     
     const prosesBtn = document.getElementById('proses-btn');
     const beriKelasBtn = document.getElementById('beri-kelas-btn');
@@ -100,31 +100,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'logout' })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
-    
-                isLoggedIn = false;
-                currentUser = null;
-                userFullname.textContent = '';
-                userStatus.classList.add('hidden');
-                showStatus('Logout berhasil.', 'success');
-    
-                // Redirect ke halaman login setelah logout sukses
-                setTimeout(() => {
-                    window.location.href = 'login';
-                }, 1000);
-            } catch (error) {
-                showStatus(error.message, 'error');
-            }
-        });
-    }
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'logout' })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+
+            isLoggedIn = false;
+            currentUser = null;
+            userFullname.textContent = '';
+            userStatus.classList.add('hidden');
+            showStatus('Logout berhasil.', 'success');
+        } catch (error) {
+            showStatus(error.message, 'error');
+        }
+    });
+}
 
         // Tambahkan fungsi ini di dalam DOMContentLoaded:
     function updateSelectedPreview() {
@@ -180,21 +175,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+if (tabTambahKelas) {
     tabTambahKelas.addEventListener('click', () => {
         switchTab('tambah-kelas');
         localStorage.setItem('activeTab', 'tambah-kelas');
     });
+}
+if (tabNaikKelas) {
     tabNaikKelas.addEventListener('click', () => {
         switchTab('naik-kelas');
         localStorage.setItem('activeTab', 'naik-kelas');
     });
+}
+if (tabBeriKelas) {
     tabBeriKelas.addEventListener('click', () => {
         switchTab('beri-kelas');
         localStorage.setItem('activeTab', 'beri-kelas');
-        // Tampilkan semua siswa tanpa kelas saat tab dibuka
         const promise = fetch(`${API_URL}?action=get_members_no_class`);
         displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
     });
+}
 
     // Inisialisasi tab aktif dari localStorage jika ada
     const savedTab = localStorage.getItem('activeTab') || 'tambah-kelas';
@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Logout Button Event
+if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         try {
             const response = await fetch(API_URL, {
@@ -215,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message);
-    
+
             isLoggedIn = false;
             currentUser = null;
             userFullname.textContent = '';
@@ -225,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus(error.message, 'error');
         }
     });
+}
 
     // Class Dropdown Functions
     function createKelasDropdown(inputElement, hiddenIdElement, dropdownElement, loadingElement, resultsElement) {

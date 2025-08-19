@@ -96,18 +96,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add Event Listeners
     if (tabTambahKelas) {
-        tabTambahKelas.addEventListener('click', () => switchTab(tabTambahKelas, tambahKelasContent));
-    }
-    if (tabNaikKelas) {
-        tabNaikKelas.addEventListener('click', () => switchTab(tabNaikKelas, naikKelasContent));
-    }
-    if (tabBeriKelas) {
-        tabBeriKelas.addEventListener('click', () => switchTab(tabBeriKelas, beriKelasContent));
-    }
-
+    tabTambahKelas.addEventListener('click', () => {
+        switchTab('tambah-kelas');
+        localStorage.setItem('activeTab', 'tambah-kelas');
+    });
+}
+if (tabNaikKelas) {
+    tabNaikKelas.addEventListener('click', () => {
+        switchTab('naik-kelas');
+        localStorage.setItem('activeTab', 'naik-kelas');
+    });
+}
+if (tabBeriKelas) {
+    tabBeriKelas.addEventListener('click', () => {
+        switchTab('beri-kelas');
+        localStorage.setItem('activeTab', 'beri-kelas');
+        const promise = fetch(`${API_URL}?action=get_members_no_class`);
+        displayMembers(promise, studentNoClassListDiv, studentNoClassSelectionArea, true);
+    });
+}
     // Tambah Kelas Form Handler
     if (tambahKelasBtn) {
         tambahKelasBtn.addEventListener('click', async () => {
+            console.log('Tombol tambah kelas diklik');
             const namaKelas = namaKelasInput.value.trim();
             if (!namaKelas) {
                 showStatus('Nama kelas tidak boleh kosong', 'error');

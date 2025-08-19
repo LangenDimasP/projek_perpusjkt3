@@ -212,12 +212,12 @@ session_start();
                             <div class="flex justify-end items-center mb-4">
                                 <div class="flex items-center space-x-4">
                                     <label class="text-gray-700 font-semibold">Kategori:</label>
-                                    <select id="category-filter" onchange="resetPages(); loadDetailData(selectedProjectId)" class="p-2 border-2 border-gray-200 rounded-lg focus:border-blue-500">
-                                        <option value="all">Semua Kategori</option>
-                                        <option value="7">Koleksi Umum</option>
-                                        <option value="8">Koleksi Referensi</option>
-                                        <option value="9">Fiksi</option>
-                                    </select>
+                                    <div id="category-filter-group" class="flex space-x-2">
+                                        <button type="button" class="category-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold shadow transition-all duration-200" data-value="all">Semua Kategori</button>
+                                        <button type="button" class="category-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold shadow transition-all duration-200" data-value="7">Koleksi Umum</button>
+                                        <button type="button" class="category-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold shadow transition-all duration-200" data-value="8">Koleksi Referensi</button>
+                                        <button type="button" class="category-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold shadow transition-all duration-200" data-value="9">Fiksi</button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -439,10 +439,29 @@ session_start();
             resultsPage = 1;
         }
 
+        let selectedCategory = "all";
+        
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Ubah tampilan aktif
+                document.querySelectorAll('.category-btn').forEach(b => {
+                    b.classList.remove('bg-blue-500', 'text-white');
+                    b.classList.add('bg-gray-100', 'text-gray-700');
+                });
+                this.classList.add('bg-blue-500', 'text-white');
+                this.classList.remove('bg-gray-100', 'text-gray-700');
+                // Set kategori & reload data
+                selectedCategory = this.getAttribute('data-value');
+                resetPages();
+                loadDetailData(selectedProjectId);
+            });
+        });
+        
+
         function loadDetailData(projectId) {
             const unverifiedLimit = document.getElementById('unverified-limit').value;
             const resultsLimit = document.getElementById('results-limit').value;
-            const categoryFilter = document.getElementById('category-filter').value;
+            const categoryFilter = selectedCategory;
 
             fetch('../stock_opname_api.php', {
                 method: 'POST',
