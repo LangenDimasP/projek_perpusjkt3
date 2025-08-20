@@ -69,6 +69,11 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
         .notification-slide {
             animation: slideInRight 0.3s ease-out;
         }
+        .tab-active:hover {
+    background: #4f46e5 !important;
+    color: white !important;
+    cursor: default;
+}
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -142,34 +147,41 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
             <div class="mt-6">
                 <!-- Tab 1: Daftar Jenis Anggota -->
                 <div id="tab-daftar" class="tab-content">
-                    <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="bg-blue-500 p-6">
-                            <h3 class="text-xl font-semibold text-white flex items-center">
-                                <i class="fas fa-table mr-3"></i>
-                                Daftar Jenis Anggota
-                            </h3>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full" id="jenis-table">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Anggota</th>
-                                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Masa Berlaku</th>
-                                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Pinjam</th>
-                                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Hari Pinjam</th>
-                                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="jenis-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                            </table>
-                        </div>
-                        <p id="warning-message" class="text-red-500 p-6 hidden bg-red-50 border-l-4 border-red-500">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            Silahkan memilih jenis anggota di tab 1
-                        </p>
-                    </div>
-                </div>
+    <div class="bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="bg-blue-500 p-6">
+            <h3 class="text-xl font-semibold text-white flex items-center">
+                <i class="fas fa-table mr-3"></i>
+                Daftar Jenis Anggota
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table id="jenis-table" class="min-w-full bg-white border border-gray-200 rounded-lg shadow">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Anggota</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Masa Berlaku (hari)</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Pinjam Koleksi</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Loan Days</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warning Due Day</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day Perpanjang</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count Perpanjang</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Denda Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Suspend Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jenis-table-body" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+        <p id="warning-message" class="text-red-500 p-6 hidden bg-red-50 border-l-4 border-red-500">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            Silahkan memilih jenis anggota di tab 1
+        </p>
+    </div>
+</div>
 
                 <!-- Tab 2: Tambah Jenis Anggota -->
                 <div id="tab-tambah" class="tab-content hidden">
@@ -180,71 +192,174 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                                 Tambah Jenis Anggota Baru
                             </h3>
                         </div>
-                        <form id="form-tambah" class="p-8">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="md:col-span-2">
-                                    <label for="jenisanggota" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-user-tag mr-2 text-blue-500"></i>
-                                        Jenis Anggota
-                                    </label>
-                                    <input type="text" id="jenisanggota" name="jenisanggota" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
-                                           placeholder="Masukkan jenis anggota..." required>
-                                </div>
-                                
-                                <div>
-                                    <label for="masaberlaku" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-calendar-alt mr-2 text-purple-500"></i>
-                                        Masa Berlaku (hari)
-                                    </label>
-                                    <input type="number" id="masaberlaku" name="masaberlaku" value="365" min="0" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300">
-                                </div>
-                                
-                                <div>
-                                    <label for="maxpinjam" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-book mr-2 text-green-500"></i>
-                                        Max Pinjam Koleksi
-                                    </label>
-                                    <input type="number" id="maxpinjam" name="maxpinjam" value="1000" min="0" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
-                                </div>
-                                
-                                <div>
-                                    <label for="maxloandays" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-clock mr-2 text-orange-500"></i>
-                                        Max Hari Pinjam
-                                    </label>
-                                    <input type="number" id="maxloandays" name="maxloandays" value="0" min="0" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300">
-                                </div>
-                                
-                                <div>
-                                    <label for="biayapendaftaran" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-money-bill-wave mr-2 text-red-500"></i>
-                                        Biaya Pendaftaran
-                                    </label>
-                                    <input type="number" id="biayapendaftaran" name="biayapendaftaran" value="0" min="0" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300">
-                                </div>
-                                
-                                <div>
-                                    <label for="biayaperpanjangan" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        <i class="fas fa-credit-card mr-2 text-indigo-500"></i>
-                                        Biaya Perpanjangan
-                                    </label>
-                                    <input type="number" id="biayaperpanjangan" name="biayaperpanjangan" value="0" min="0" 
-                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
-                                </div>
-                            </div>
-                            
-                            <div class="mt-8">
-                                <button type="submit" class="bg-green-500 text-white px-8 py-3 rounded-lg font-semibold flex items-center">
-                                    <i class="fas fa-plus mr-2"></i>
-                                    Tambah Jenis Anggota
-                                </button>
-                            </div>
-                        </form>
+                        <form id="form-tambah" class="p-8 space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="md:col-span-2">
+            <label for="jenisanggota" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-user-tag mr-2 text-blue-500"></i>
+                Jenis Anggota
+            </label>
+            <input type="text" id="jenisanggota" name="jenisanggota" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
+                   placeholder="Masukkan jenis anggota..." required>
+        </div>
+        <div>
+            <label for="masaberlaku" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-calendar-alt mr-2 text-purple-500"></i>
+                Masa Berlaku (hari)
+            </label>
+            <input type="number" id="masaberlaku" name="masaberlaku" value="365" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div>
+            <label for="maxpinjam" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-book mr-2 text-green-500"></i>
+                Max Pinjam Koleksi
+            </label>
+            <input type="number" id="maxpinjam" name="maxpinjam" value="1000" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div>
+            <label for="maxloandays" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-clock mr-2 text-orange-500"></i>
+                Max Hari Pinjam
+            </label>
+            <input type="number" id="maxloandays" name="maxloandays" value="0" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div>
+            <label for="biayapendaftaran" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-money-bill-wave mr-2 text-red-500"></i>
+                Biaya Pendaftaran
+            </label>
+            <input type="number" id="biayapendaftaran" name="biayapendaftaran" value="0" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div>
+            <label for="biayaperpanjangan" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-credit-card mr-2 text-indigo-500"></i>
+                Biaya Perpanjangan
+            </label>
+            <input type="number" id="biayaperpanjangan" name="biayaperpanjangan" value="0" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <!-- Field baru -->
+        <div>
+            <label for="warningloandueday" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-bell mr-2 text-yellow-500"></i>
+                Jeda Hari Peringatan Peminjaman utk Kembali
+            </label>
+            <input type="number" id="warningloandueday" name="warningloandueday" value="0" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div>
+            <label for="dayperpanjang" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-calendar-plus mr-2 text-teal-500"></i>
+                Maks. Lama Perpanjangan
+            </label>
+            <input type="number" id="dayperpanjang" name="dayperpanjang" value="0" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div>
+            <label for="countperpanjang" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-redo mr-2 text-pink-500"></i>
+                Maks. Banyaknya Perpanjang
+            </label>
+            <input type="number" id="countperpanjang" name="countperpanjang" value="0" min="0" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300">
+        </div>
+        <div class="md:col-span-2">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="uploaddokumen" name="uploaddokumen" value="1" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                <span class="ml-2 text-sm font-semibold text-gray-700">Upload Dokumen Keanggotaan Online</span>
+            </label>
+        </div>
+    </div>
+    
+    <!-- Denda Section -->
+    <div class="border-t pt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Denda</label>
+        <div class="flex space-x-4">
+            <label class="inline-flex items-center">
+                <input type="radio" name="dendatype" value="Konstan" class="DendaTypeRadio form-radio" checked>
+                <span class="ml-2">Konstan</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="dendatype" value="Berkelipatan" class="DendaTypeRadio form-radio">
+                <span class="ml-2">Berkelipatan</span>
+            </label>
+        </div>
+        <div class="mt-4">
+            <label for="dendapertenor" class="block text-sm font-medium text-gray-700 mb-2">Jumlah Denda</label>
+            <input type="number" id="dendapertenor" name="dendapertenor" min="0" value="0" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div id="denda-tenor-pack" class="mt-4 field-jenisanggota-dendatenorjumlah-pack hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Satuan Tenor Denda</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="number" id="dendatenorjumlah" name="dendatenorjumlah" min="1" value="1" class="w-full px-4 py-3 rounded-lg border border-gray-300">
+                <select name="dendatenorsatuan" class="w-full px-4 py-3 rounded-lg border border-gray-300">
+                    <option value="Hari">Harian</option>
+                    <option value="Minggu">Mingguan</option>
+                    <option value="Bulan">Bulanan</option>
+                    <option value="Tahun">Tahunan</option>
+                </select>
+            </div>
+        </div>
+        <div id="denda-multiply" class="mt-4 field-jenisanggota-dendatenormultiply hidden">
+            <label for="dendatenormultiply" class="block text-sm font-medium text-gray-700 mb-2">Pengali Tenor Denda</label>
+            <input type="number" id="dendatenormultiply" name="dendatenormultiply" min="1" value="1" class="w-full px-4 py-3 rounded-lg border border-gray-300">
+            <p class="text-sm text-gray-500 mt-1">Kali</p>
+        </div>
+    </div>
+
+    <!-- Skorsing Section -->
+    <div class="border-t pt-4">
+        <div class="flex items-center mb-4">
+            <input type="checkbox" id="suspendmember" name="suspendmember" value="1" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+            <label for="suspendmember" class="ml-2 block text-sm font-medium text-gray-700">Aktifkan Skorsing Member</label>
+        </div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Skorsing</label>
+        <div class="flex space-x-4">
+            <label class="inline-flex items-center">
+                <input type="radio" name="suspendtype" value="Konstan" class="SuspendTypeRadio form-radio" checked>
+                <span class="ml-2">Konstan</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="suspendtype" value="Berkelipatan" class="SuspendTypeRadio form-radio">
+                <span class="ml-2">Berkelipatan</span>
+            </label>
+        </div>
+        <div class="mt-4">
+            <label for="daysuspend" class="block text-sm font-medium text-gray-700 mb-2">Lama Skorsing</label>
+            <input type="number" id="daysuspend" name="daysuspend" min="0" value="0" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            <p class="text-sm text-gray-500 mt-1">Hari</p>
+        </div>
+        <div id="suspend-tenor-pack" class="mt-4 field-jenisanggota-suspendtenorjumlah-pack hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Satuan Tenor Skorsing</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="number" id="suspendtenorjumlah" name="suspendtenorjumlah" min="1" value="1" class="w-full px-4 py-3 rounded-lg border border-gray-300">
+                <select name="suspendtenorsatuan" class="w-full px-4 py-3 rounded-lg border border-gray-300">
+                    <option value="Hari">Harian</option>
+                    <option value="Minggu">Mingguan</option>
+                    <option value="Bulan">Bulanan</option>
+                    <option value="Tahun">Tahunan</option>
+                </select>
+            </div>
+        </div>
+        <div id="suspend-multiply" class="mt-4 field-jenisanggota-suspendtenormultiply hidden">
+            <label for="suspendtenormultiply" class="block text-sm font-medium text-gray-700 mb-2">Pengali Tenor Skorsing</label>
+            <input type="number" id="suspendtenormultiply" name="suspendtenormultiply" min="1" value="1" class="w-full px-4 py-3 rounded-lg border border-gray-300">
+            <p class="text-sm text-gray-500 mt-1">Kali</p>
+        </div>
+    </div>
+
+    <div class="mt-8">
+        <button type="submit" class="bg-green-500 text-white px-8 py-3 rounded-lg font-semibold flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Tambah Jenis Anggota
+        </button>
+    </div>
+</form>
                     </div>
                 </div>
 
@@ -369,50 +484,117 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
 
         // Fetch and render jenis anggota table
         function loadJenisTable() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', '../jenis_anggota.api.php?action=get_jenis', true);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    var tbody = document.getElementById('jenis-table-body');
-                    tbody.innerHTML = '';
-                    if (data.success) {
-                        for (var i = 0; i < data.data.length; i++) {
-                            var row = data.data[i];
-                            tbody.innerHTML += '<tr class="hover:bg-gray-50 transition-colors duration-200">' +
-                                '<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">' + row.id + '</td>' +
-                                '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">' + row.jenisanggota + '</td>' +
-                                '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' +
-                                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">' +
-                                        '<i class="fas fa-calendar-alt mr-1"></i>' + row.MasaBerlakuAnggota + ' hari' +
-                                    '</span>' +
-                                '</td>' +
-                                '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' +
-                                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">' +
-                                        '<i class="fas fa-book mr-1"></i>' + row.MaxPinjamKoleksi +
-                                    '</span>' +
-                                '</td>' +
-                                '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' +
-                                    '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">' +
-                                        '<i class="fas fa-clock mr-1"></i>' + row.MaxLoanDays +
-                                    '</span>' +
-                                '</td>' +
-                                '<td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">' +
-                                    '<button onclick="selectJenis(' + row.id + ', \'kategori\')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transition-all duration-300">' +
-                                        '<i class="fas fa-tags mr-1"></i>Kategori' +
-                                    '</button>' +
-                                    '<button onclick="selectJenis(' + row.id + ', \'lokasi\')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 transition-all duration-300">' +
-                                        '<i class="fas fa-map-marker-alt mr-1"></i>Lokasi' +
-                                    '</button>' +
-                                '</td></tr>';
-                        }
-                    } else {
-                        showNotification(data.message, false);
-                    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '../jenis_anggota.api.php?action=get_jenis', true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            var data = JSON.parse(xhr.responseText);
+            var tbody = document.getElementById('jenis-table-body');
+            tbody.innerHTML = '';
+            if (data.success) {
+                for (var i = 0; i < data.data.length; i++) {
+                    var row = data.data[i];
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors duration-200">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">${row.id}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900 font-semibold">${row.jenisanggota}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-calendar-alt mr-1"></i>${row.MasaBerlakuAnggota} hari
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-book mr-1"></i>${row.MaxPinjamKoleksi}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-clock mr-1"></i>${row.MaxLoanDays}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${row.WarningLoanDueDay}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${row.DayPerpanjang}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${row.CountPerpanjang}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${row.DendaType}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">${row.SuspendType}</td>
+                            <td class="px-4 py-3 text-sm font-medium space-x-2">
+                                <button onclick="selectJenis(${row.id}, 'kategori')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transition-all duration-300">
+                                    <i class="fas fa-tags mr-1"></i>Kategori
+                                </button>
+                                <button onclick="selectJenis(${row.id}, 'lokasi')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 transition-all duration-300">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>Lokasi
+                                </button>
+                            </td>
+                        </tr>`;
                 }
-            };
-            xhr.send();
+            } else {
+                showNotification(data.message, false);
+            }
         }
+    };
+    xhr.send();
+}
+
+// Toggle logic for DendaType
+document.querySelectorAll('.DendaTypeRadio').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'Konstan') {
+            document.getElementById('denda-tenor-pack').classList.add('hidden');
+            document.getElementById('denda-multiply').classList.add('hidden');
+            document.getElementById('dendatenorjumlah').min = 0;
+            document.getElementById('dendatenorjumlah').value = 0;
+            document.getElementById('dendatenormultiply').min = 0;
+            document.getElementById('dendatenormultiply').value = 0;
+        } else {
+            document.getElementById('denda-tenor-pack').classList.remove('hidden');
+            document.getElementById('denda-multiply').classList.remove('hidden');
+            document.getElementById('dendatenorjumlah').min = 1;
+            document.getElementById('dendatenorjumlah').value = 1;
+            document.getElementById('dendatenormultiply').min = 1;
+            document.getElementById('dendatenormultiply').value = 1;
+        }
+    });
+});
+
+// Toggle logic for SuspendType
+document.querySelectorAll('.SuspendTypeRadio').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'Konstan') {
+            document.getElementById('suspend-tenor-pack').classList.add('hidden');
+            document.getElementById('suspend-multiply').classList.add('hidden');
+            document.getElementById('suspendtenorjumlah').min = 0;
+            document.getElementById('suspendtenorjumlah').value = 0;
+            document.getElementById('suspendtenormultiply').min = 0;
+            document.getElementById('suspendtenormultiply').value = 0;
+        } else {
+            document.getElementById('suspend-tenor-pack').classList.remove('hidden');
+            document.getElementById('suspend-multiply').classList.remove('hidden');
+            document.getElementById('suspendtenorjumlah').min = 1;
+            document.getElementById('suspendtenorjumlah').value = 1;
+            document.getElementById('suspendtenormultiply').min = 1;
+            document.getElementById('suspendtenormultiply').value = 1;
+        }
+    });
+});
+
+// Initialize toggle state
+if (document.querySelector('.DendaTypeRadio[value="Konstan"]').checked) {
+    document.getElementById('denda-tenor-pack').classList.add('hidden');
+    document.getElementById('denda-multiply').classList.add('hidden');
+    document.getElementById('dendatenorjumlah').min = 0;
+    document.getElementById('dendatenorjumlah').value = 0;
+    document.getElementById('dendatenormultiply').min = 0;
+    document.getElementById('dendatenormultiply').value = 0;
+}
+if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
+    document.getElementById('suspend-tenor-pack').classList.add('hidden');
+    document.getElementById('suspend-multiply').classList.add('hidden');
+    document.getElementById('suspendtenorjumlah').min = 0;
+    document.getElementById('suspendtenorjumlah').value = 0;
+    document.getElementById('suspendtenormultiply').min = 0;
+    document.getElementById('suspendtenormultiply').value = 0;
+}
 
         // Tab switching
         var tabs = document.getElementById('tab-nav').getElementsByTagName('a');
@@ -546,42 +728,76 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
 
         // Form submission for adding new jenis anggota
         document.getElementById('form-tambah').onsubmit = function(e) {
-            e.preventDefault();
-            var formData = {
-                jenisanggota: document.getElementById('jenisanggota').value,
-                masaberlaku: document.getElementById('masaberlaku').value,
-                maxpinjam: document.getElementById('maxpinjam').value,
-                maxloandays: document.getElementById('maxloandays').value,
-                biayapendaftaran: document.getElementById('biayapendaftaran').value,
-                biayaperpanjangan: document.getElementById('biayaperpanjangan').value
-            };
+    e.preventDefault();
+    var formData = {
+        jenisanggota: document.getElementById('jenisanggota').value,
+        masaberlaku: document.getElementById('masaberlaku').value,
+        maxpinjam: document.getElementById('maxpinjam').value,
+        maxloandays: document.getElementById('maxloandays').value,
+        biayapendaftaran: document.getElementById('biayapendaftaran').value,
+        biayaperpanjangan: document.getElementById('biayaperpanjangan').value,
+        warningloandueday: document.getElementById('warningloandueday').value,
+        dayperpanjang: document.getElementById('dayperpanjang').value,
+        countperpanjang: document.getElementById('countperpanjang').value,
+        uploaddokumen: document.getElementById('uploaddokumen').checked ? 1 : 0,
+        suspendmember: document.getElementById('suspendmember').checked ? 1 : 0,
+        dendatype: document.querySelector('input[name="dendatype"]:checked').value,
+        dendapertenor: document.getElementById('dendapertenor').value,
+        dendatenorjumlah: document.getElementById('dendatenorjumlah').value,
+        dendatenorsatuan: document.querySelector('select[name="dendatenorsatuan"]').value,
+        dendatenormultiply: document.getElementById('dendatenormultiply').value,
+        suspendtype: document.querySelector('input[name="suspendtype"]:checked').value,
+        daysuspend: document.getElementById('daysuspend').value,
+        suspendtenorjumlah: document.getElementById('suspendtenorjumlah').value,
+        suspendtenorsatuan: document.querySelector('select[name="suspendtenorsatuan"]').value,
+        suspendtenormultiply: document.getElementById('suspendtenormultiply').value
+    };
 
-            if (!formData.jenisanggota) {
-                showNotification('Jenis anggota harus diisi', false);
-                return;
+    if (!formData.jenisanggota) {
+        showNotification('Jenis anggota harus diisi', false);
+        return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '../jenis_anggota.api.php?action=add', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            var data = JSON.parse(xhr.responseText);
+            showNotification(data.message, data.success);
+            if (data.success) {
+                document.getElementById('form-tambah').reset();
+                // Reset to default values
+                document.getElementById('masaberlaku').value = '365';
+                document.getElementById('maxpinjam').value = '1000';
+                document.getElementById('maxloandays').value = '0';
+                document.getElementById('biayapendaftaran').value = '0';
+                document.getElementById('biayaperpanjangan').value = '0';
+                document.getElementById('warningloandueday').value = '0';
+                document.getElementById('dayperpanjang').value = '0';
+                document.getElementById('countperpanjang').value = '0';
+                document.getElementById('dendapertenor').value = '0';
+                document.getElementById('dendatenorjumlah').value = '0';
+                document.getElementById('dendatenormultiply').value = '0';
+                document.getElementById('daysuspend').value = '0';
+                document.getElementById('suspendtenorjumlah').value = '0';
+                document.getElementById('suspendtenormultiply').value = '0';
+                document.querySelector('.DendaTypeRadio[value="Konstan"]').checked = true;
+                document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked = true;
+                document.getElementById('denda-tenor-pack').classList.add('hidden');
+                document.getElementById('denda-multiply').classList.add('hidden');
+                document.getElementById('suspend-tenor-pack').classList.add('hidden');
+                document.getElementById('suspend-multiply').classList.add('hidden');
+                loadJenisTable();
+                // Pindah ke tab daftar jenis anggota setelah berhasil
+                setTimeout(function() {
+                    tabs[0].click();
+                }, 500);
             }
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '../jenis_anggota.api.php?action=add', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    showNotification(data.message, data.success);
-                    if (data.success) {
-                        document.getElementById('form-tambah').reset();
-                        // Reset to default values
-                        document.getElementById('masaberlaku').value = '365';
-                        document.getElementById('maxpinjam').value = '1000';
-                        document.getElementById('maxloandays').value = '0';
-                        document.getElementById('biayapendaftaran').value = '0';
-                        document.getElementById('biayaperpanjangan').value = '0';
-                        loadJenisTable();
-                    }
-                }
-            };
-            xhr.send(JSON.stringify(formData));
-        };
+        }
+    };
+    xhr.send(JSON.stringify(formData));
+};
 
         // Form submission for saving kategori defaults
         document.getElementById('form-default-kategori').onsubmit = function(e) {
@@ -785,9 +1001,15 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                             showNotification(data.message, data.success);
                             btn.disabled = false;
                             btn.innerHTML = '<i class="fas fa-sync mr-2"></i>Sinkronkan Semua Member';
-                            setTimeout(function() {
-                                location.reload();
-                            }, 2000);
+                            if (data.success) {
+                                setTimeout(function() {
+                                    tabs[0].click(); // Kembali ke tab daftar jenis anggota
+                                }, 500);
+                            } else {
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            }
                         })
                         .catch(() => {
                             showNotification('Gagal sinkronisasi', false);

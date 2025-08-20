@@ -23,48 +23,91 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 switch ($action) {
     case 'get_jenis':
         // Fetch all jenis anggota for table
-        $result = $mysqli->query("SELECT id, jenisanggota, MasaBerlakuAnggota, MaxPinjamKoleksi, MaxLoanDays FROM jenis_anggota ORDER BY id DESC");
-        $data = array();
-        while ($row = $result->fetch_assoc()) {
-            $data[] = $row;
-        }
-        echo json_encode(array('success' => true, 'data' => $data));
-        break;
+        $result = $mysqli->query("SELECT id, jenisanggota, MasaBerlakuAnggota, MaxPinjamKoleksi, MaxLoanDays, 
+                              WarningLoanDueDay, DayPerpanjang, CountPerpanjang, DendaType, SuspendType 
+                              FROM jenis_anggota ORDER BY id DESC");
+    $data = array();
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+    echo json_encode(array('success' => true, 'data' => $data));
+    break;
 
     case 'add':
-        // Handle adding new jenis anggota
-        $input = json_decode(file_get_contents('php://input'), true);
-        $jenisanggota = $mysqli->real_escape_string(isset($input['jenisanggota']) ? $input['jenisanggota'] : '');
-        $masaberlaku = isset($input['masaberlaku']) ? (int)$input['masaberlaku'] : 365;
-        $maxpinjam = isset($input['maxpinjam']) ? (int)$input['maxpinjam'] : 1000;
-        $maxloandays = isset($input['maxloandays']) ? (int)$input['maxloandays'] : 0;
-        $biayapendaftaran = isset($input['biayapendaftaran']) ? (int)$input['biayapendaftaran'] : 0;
-        $biayaperpanjangan = isset($input['biayaperpanjangan']) ? (int)$input['biayaperpanjangan'] : 0;
+    // Handle adding new jenis anggota
+    $input = json_decode(file_get_contents('php://input'), true);
+    $jenisanggota = $mysqli->real_escape_string(isset($input['jenisanggota']) ? $input['jenisanggota'] : '');
 
-        if (empty($jenisanggota)) {
-            echo json_encode(array('success' => false, 'message' => 'Jenis anggota harus diisi'));
-            exit();
-        }
+    // Validation: required, unique
+    if (empty($jenisanggota)) {
+        echo json_encode(array('success' => false, 'message' => 'Jenis anggota harus diisi'));
+        exit();
+    }
+    $checkUnique = $mysqli->query("SELECT id FROM jenis_anggota WHERE jenisanggota = '$jenisanggota'");
+    if ($checkUnique->num_rows > 0) {
+        echo json_encode(array('success' => false, 'message' => 'Jenis anggota sudah ada'));
+        exit();
+    }
 
-        $createDate = date('Y-m-d H:i:s');
-        $createTerminal = $_SERVER['REMOTE_ADDR'];
-        
-        $query = "INSERT INTO jenis_anggota (
-            jenisanggota, MasaBerlakuAnggota, MaxPinjamKoleksi, MaxLoanDays,
-            BiayaPendaftaran, BiayaPerpanjangan,
-            CreateBy, CreateDate, CreateTerminal
-        ) VALUES (
-            '$jenisanggota', $masaberlaku, $maxpinjam, $maxloandays,
-            $biayapendaftaran, $biayaperpanjangan,
-            $userId, '$createDate', '$createTerminal'
-        )";
+    // Defaults
+    $masaberlaku = isset($input['masaberlaku']) ? (int)$input['masaberlaku'] : 365;
+    $maxpinjam = isset($input['maxpinjam']) ? (int)$input['maxpinjam'] : 1000;
+    $maxloandays = isset($input['maxloandays']) ? (int)$input['maxloandays'] : 0;
+    $biayapendaftaran = isset($input['biayapendaftaran']) ? (int)$input['biayapendaftaran'] : 0;
+    $biayaperpanjangan = isset($input['biayaperpanjangan']) ? (int)$input['biayaperpanjangan'] : 0;
+    $warningloandueday = isset($input['warningloandueday']) ? (int)$input['warningloandueday'] : 0;
+    $dayperpanjang = isset($input['dayperpanjang']) ? (int)$input['dayperpanjang'] : 0;
+    $countperpanjang = isset($input['countperpanjang']) ? (int)$input['countperpanjang'] : 0;
+    $uploadDokumen = isset($input['uploaddokumen']) && $input['uploaddokumen'] ? 1 : 0; // bit
+    $suspendMember = isset($input['suspendmember']) && $input['suspendmember'] ? 1 : 0; // bit
 
-        if ($mysqli->query($query)) {
-            echo json_encode(array('success' => true, 'message' => 'Jenis anggota berhasil ditambahkan'));
-        } else {
-            echo json_encode(array('success' => false, 'message' => 'Gagal menambahkan jenis anggota'));
-        }
-        break;
+    // Denda
+    $dendatype = $mysqli->real_escape_string(isset($input['dendatype']) ? $input['dendatype'] : 'Konstan');
+    $dendapertenor = isset($input['dendapertenor']) ? (int)$input['dendapertenor'] : 0;
+    $dendatenorjumlah = isset($input['dendatenorjumlah']) ? (float)$input['dendatenorjumlah'] : ($dendatype === 'Konstan' ? 0 : 1);
+    $dendatenorsatuan = $mysqli->real_escape_string(isset($input['dendatenorsatuan']) ? $input['dendatenorsatuan'] : 'Hari');
+    $dendatenormultiply = isset($input['dendatenormultiply']) ? (int)$input['dendatenormultiply'] : ($dendatype === 'Konstan' ? 0 : 1);
+
+    // Suspend
+    $suspendtype = $mysqli->real_escape_string(isset($input['suspendtype']) ? $input['suspendtype'] : 'Konstan');
+    $daysuspend = isset($input['daysuspend']) ? (int)$input['daysuspend'] : 0;
+    $suspendtenorjumlah = isset($input['suspendtenorjumlah']) ? (float)$input['suspendtenorjumlah'] : ($suspendtype === 'Konstan' ? 0 : 1);
+    $suspendtenorsatuan = $mysqli->real_escape_string(isset($input['suspendtenorsatuan']) ? $input['suspendtenorsatuan'] : 'Hari');
+    $suspendtenormultiply = isset($input['suspendtenormultiply']) ? (int)$input['suspendtenormultiply'] : ($suspendtype === 'Konstan' ? 0 : 1);
+
+    // Validation: no negative values
+    if ($masaberlaku < 0 || $maxpinjam < 0 || $maxloandays < 0 || $dendapertenor < 0 || $daysuspend < 0) {
+        echo json_encode(array('success' => false, 'message' => 'Nilai tidak boleh negatif'));
+        exit();
+    }
+
+    $createDate = date('Y-m-d H:i:s');
+    $createTerminal = $_SERVER['REMOTE_ADDR'];
+
+    $query = "INSERT INTO jenis_anggota (
+        jenisanggota, MasaBerlakuAnggota, MaxPinjamKoleksi, MaxLoanDays,
+        BiayaPendaftaran, BiayaPerpanjangan,
+        WarningLoanDueDay, DayPerpanjang, CountPerpanjang,
+        DendaType, DendaPerTenor, DendaTenorJumlah, DendaTenorSatuan, DendaTenorMultiply,
+        SuspendMember, SuspendType, DaySuspend, SuspendTenorJumlah, SuspendTenorSatuan, SuspendTenorMultiply,
+        UploadDokumenKeanggotaanOnline,
+        CreateBy, CreateDate, CreateTerminal
+    ) VALUES (
+        '$jenisanggota', $masaberlaku, $maxpinjam, $maxloandays,
+        $biayapendaftaran, $biayaperpanjangan,
+        $warningloandueday, $dayperpanjang, $countperpanjang,
+        '$dendatype', $dendapertenor, $dendatenorjumlah, '$dendatenorsatuan', $dendatenormultiply,
+        $suspendMember, '$suspendtype', $daysuspend, $suspendtenorjumlah, '$suspendtenorsatuan', $suspendtenormultiply,
+        $uploadDokumen,
+        $userId, '$createDate', '$createTerminal'
+    )";
+
+    if ($mysqli->query($query)) {
+        echo json_encode(array('success' => true, 'message' => 'Jenis anggota berhasil ditambahkan'));
+    } else {
+        echo json_encode(array('success' => false, 'message' => 'Gagal menambahkan jenis anggota: ' . $mysqli->error));
+    }
+    break;
 
     case 'get_defaults':
         // Fetch default collection categories and locations

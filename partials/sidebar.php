@@ -16,7 +16,7 @@ $baseUrl = $isInViewsFolder ? '../' : '';
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/logo.png">
     
     <!-- Tailwind CSS -->
-    <link href="../dist/output.css" rel="stylesheet">
+    <link href="<?php echo $baseUrl; ?>dist/output.css" rel="stylesheet">
     
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -47,7 +47,7 @@ $baseUrl = $isInViewsFolder ? '../' : '';
     
             <!-- Logo 3: PNG with circle -->
             <div class="w-12 h-12 bg-white shadow-md rounded-full flex items-center justify-center">
-                <img src="../assets/images/logo.png" alt="Logo" class="w-8 h-8">
+                <img src="<?php echo $baseUrl; ?>assets/images/logo.png" alt="Logo" class="w-8 h-8">
             </div>
         </div>
         <h2 class="text-lg font-bold text-center text-gray-800">INLISLite QuickAccess</h2>
