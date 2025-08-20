@@ -31,6 +31,57 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     exit;
 }
 
+
+function getMaxMemberNo($mysqli, $template, $location) {
+    if ($template == 1) {
+        $tanggal = date("ymd");
+        $prefix = $location . $tanggal;
+        $sql = "SELECT MAX(MemberNo) as MemberNo FROM members WHERE MemberNo LIKE '{$prefix}%'";
+    } elseif ($template == 2) {
+        $tanggal = date("Ym");
+        $prefix = $location . $tanggal;
+        $sql = "SELECT MAX(MemberNo) as MemberNo FROM members WHERE MemberNo LIKE '{$prefix}%'";
+    } elseif ($template == 3) {
+        $tahun = date("Y");
+        $sql = "SELECT MAX(MemberNo) as MemberNo FROM members WHERE SUBSTR(MemberNo,8,4) = '{$tahun}'";
+    } else {
+        return null;
+    }
+    $result = $mysqli->query($sql);
+    $row = $result->fetch_assoc();
+    return $row['MemberNo'];
+}
+
+function getNewMemberNo($maxMemberNo, $template, $jk, $location) {
+    if ($template == 1) {
+        $rest = isset($maxMemberNo) && $maxMemberNo ? (intval(substr($maxMemberNo, -5)) + 1) : 1;
+        $tanggaldepan = date("ymd");
+        $potongtanggal = substr($tanggaldepan, -6);
+        $batas = 10000;
+        $jumlah = ($batas + $rest);
+        $jumlahtotal = $potongtanggal . $jumlah;
+        $no = substr_replace($jumlahtotal, '0', 6, 1);
+    } elseif ($template == 2) {
+        $rest = isset($maxMemberNo) && $maxMemberNo ? (intval(substr($maxMemberNo, -4)) + 1) : 1;
+        $tanggaldepan = date("Ym");
+        $potongtanggal = substr($tanggaldepan, -6);
+        $jumlahtotal = $potongtanggal . str_pad($rest, 4, '0', STR_PAD_LEFT);
+        $no = substr_replace($jumlahtotal, '', 6, 1);
+    } elseif ($template == 3) {
+        $jk_str = ($jk == 1) ? "L" : "P";
+        $tahun = date("Y");
+        $rest = isset($maxMemberNo) && $maxMemberNo ? (intval(substr($maxMemberNo, 1, 5)) + 1) : 1;
+        $batas = 10000;
+        $jumlah = ($batas + $rest);
+        $replace = substr_replace($jumlah, '0', 0, 1);
+        $no = $replace . $jk_str . $tahun;
+    } else {
+        $no = null;
+    }
+    $loc = (strlen($location) == 1) ? '0' . $location : $location;
+    return $loc . $no;
+}
+
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate required fields
@@ -61,7 +112,18 @@ try {
         }
 
         // Generate member number
-        $member_no = 'M' . date('Ym') . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+        // Ambil template dan location dari config/session/database
+        $template = 1; // Ganti sesuai kebutuhan, misal dari DB/config
+        $location = isset($_SESSION['location']) ? $_SESSION['location'] : '01'; // Default 01
+        
+        // Untuk template 4 (NIK), langsung pakai nomor identitas
+        if ($template == 4) {
+            $member_no = $_POST['IdentityNo'];
+        } else {
+            $maxMemberNo = getMaxMemberNo($mysqli, $template, $location);
+            $jk = (int)$_POST['Sex_id'];
+            $member_no = getNewMemberNo($maxMemberNo, $template, $jk, $location);
+        }
         $create_terminal = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
 
         // Prepare variables for binding
