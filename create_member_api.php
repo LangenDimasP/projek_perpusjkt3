@@ -115,16 +115,39 @@ try {
         // Ambil template dan location dari config/session/database
         $template = 1; // Ganti sesuai kebutuhan, misal dari DB/config
         $location = isset($_SESSION['location']) ? $_SESSION['location'] : '01'; // Default 01
+
         
         // Untuk template 4 (NIK), langsung pakai nomor identitas
-        if ($template == 4) {
-            $member_no = $_POST['IdentityNo'];
+        
+        // Generate member number (manual/otomatis)
+        $member_no_type = isset($_POST['MemberNoType']) ? $_POST['MemberNoType'] : 'auto';
+        
+        if ($member_no_type === 'manual') {
+            if (empty($_POST['ManualMemberNo'])) {
+                throw new Exception("Nomor anggota manual diperlukan.");
+            }
+            // Cek duplikasi nomor anggota manual
+            $manual_no = $_POST['ManualMemberNo'];
+            $cek = $mysqli->prepare("SELECT MemberNo FROM members WHERE MemberNo = ?");
+            $cek->bind_param("s", $manual_no);
+            $cek->execute();
+            $result = $cek->get_result();
+            if ($result->num_rows > 0) {
+                throw new Exception("Nomor anggota manual sudah digunakan.");
+            }
+            $member_no = $manual_no;
+            $cek->close();
         } else {
-            $maxMemberNo = getMaxMemberNo($mysqli, $template, $location);
-            $jk = (int)$_POST['Sex_id'];
-            $member_no = getNewMemberNo($maxMemberNo, $template, $jk, $location);
+            // Untuk template 4 (NIK), langsung pakai nomor identitas
+            if ($template == 4) {
+                $member_no = $_POST['IdentityNo'];
+            } else {
+                $maxMemberNo = getMaxMemberNo($mysqli, $template, $location);
+                $jk = (int)$_POST['Sex_id'];
+                $member_no = getNewMemberNo($maxMemberNo, $template, $jk, $location);
+            }
         }
-        $create_terminal = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+        
 
         // Prepare variables for binding
         $identity_type = (int)$_POST['IdentityType_id'];

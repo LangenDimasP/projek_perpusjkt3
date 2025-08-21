@@ -38,9 +38,6 @@ session_start();
         <button class="tablink px-6 py-3 bg-gray-100 text-gray-600 rounded-lg font-semibold ml-2 transition-all duration-300 hover:bg-gray-200" onclick="openTab(event, 'tab2')">
             <i class="fas fa-list-alt mr-2"></i>Detail Stock Opname
         </button>
-        <button class="tablink px-6 py-3 bg-gray-100 text-gray-600 rounded-lg font-semibold ml-2 transition-all duration-300 hover:bg-gray-200" onclick="openTab(event, 'tab3')">
-            <i class="fas fa-chart-bar mr-2"></i>Rekapan Stock Opname
-        </button>
     </div>
 </div>
 
@@ -59,16 +56,28 @@ session_start();
                         <div class="p-8">
                             <?php
                             if (isset($_GET['success'])) {
-                                echo '<div class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-xl mb-6 shadow-lg flex items-center">
+                                echo '<div id="success-alert" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-xl mb-6 shadow-lg flex items-center">
                                         <i class="fas fa-check-circle mr-3 text-xl"></i>
                                         <span class="font-medium">' . htmlspecialchars($_GET['success']) . '</span>
-                                      </div>';
+                                      </div>
+                                      <script>
+                                        setTimeout(function() {
+                                            var el = document.getElementById("success-alert");
+                                            if (el) el.style.display = "none";
+                                        }, 3500);
+                                      </script>';
                             }
                             if (isset($_GET['error'])) {
-                                echo '<div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-4 rounded-xl mb-6 shadow-lg flex items-center">
+                                echo '<div id="error-alert" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-4 rounded-xl mb-6 shadow-lg flex items-center">
                                         <i class="fas fa-exclamation-triangle mr-3 text-xl"></i>
                                         <span class="font-medium">' . htmlspecialchars($_GET['error']) . '</span>
-                                      </div>';
+                                      </div>
+                                      <script>
+                                        setTimeout(function() {
+                                            var el = document.getElementById("error-alert");
+                                            if (el) el.style.display = "none";
+                                        }, 3500);
+                                      </script>';
                             }
                             ?>
                             
@@ -208,6 +217,11 @@ session_start();
                                 </div>
                             </div>
 
+                            <div id="rekap-stokopname" class="mb-8">
+                                <!-- Rekapan akan diisi via JS -->
+                            </div>
+
+
                             <!-- Category Filter -->
                             <div class="flex justify-end items-center mb-4">
                                 <div class="flex items-center space-x-4">
@@ -329,22 +343,6 @@ session_start();
                     </div>
                 </div>
 
-                <!-- Tab 3: Rekapan Stock Opname -->
-                <div id="tab3" class="tabcontent hidden">
-                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
-                            <h2 class="text-2xl font-bold text-white flex items-center">
-                                <i class="fas fa-chart-bar mr-3"></i>
-                                Rekapan Stock Opname
-                            </h2>
-                        </div>
-                        <div class="p-8">
-                            <div id="recap-content" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <!-- Populated via JavaScript/AJAX -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -355,6 +353,7 @@ session_start();
         let resultsPage = 1;
 
         function openTab(evt, tabName) {
+            localStorage.setItem('activeTab', tabName);
             if (tabName === 'tab2' && !selectedProjectId) {
                 showAlert('Silakan pilih proyek terlebih dahulu di Tab 1!', 'warning');
                 return;
@@ -385,29 +384,32 @@ session_start();
                 // Tambahkan fungsi handleDetailClick di bagian JavaScript
         function handleDetailClick(projectId) {
             selectedProjectId = projectId;
-            
+            localStorage.setItem('selectedProjectId', projectId);
+            localStorage.setItem('activeTab', 'tab2'); // <-- Tambahkan ini
+        
             // Sembunyikan semua tab content
             var tabcontents = document.getElementsByClassName("tabcontent");
             for (var i = 0; i < tabcontents.length; i++) {
                 tabcontents[i].classList.add("hidden");
             }
-            
+        
             // Reset semua tab link styles
             var tablinks = document.getElementsByClassName("tablink");
             for (var i = 0; i < tablinks.length; i++) {
                 tablinks[i].classList.remove("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
                 tablinks[i].classList.add("bg-gray-100", "text-gray-600");
             }
-            
+        
             // Tampilkan tab2 dan aktifkan tablink-nya
             document.getElementById("tab2").classList.remove("hidden");
             tablinks[1].classList.add("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
             tablinks[1].classList.remove("bg-gray-100", "text-gray-600");
-            
+        
             // Load data dan focus ke input barcode
             loadDetailData(selectedProjectId);
             focusBarcodeInput();
         }
+        // ...existing code...
 
         function setProjectId(projectId, event) { // Tambah parameter event
             selectedProjectId = projectId;
@@ -483,6 +485,49 @@ session_start();
                     return;
                 }
                 document.getElementById("detail-title").innerHTML = `<i class="fas fa-clipboard-list mr-3"></i>Detail Stock Opname: ${data.project_name} ${data.tahun}`;
+
+                    // --- REKAP STOCK OPNAME ---
+    if (data.recap) {
+        let html = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-green-100 to-green-50 rounded-xl p-6 shadow flex flex-col items-start">
+                    <div class="flex items-center mb-3">
+                        <span class="inline-flex items-center justify-center w-10 h-10 bg-green-500 text-white rounded-full mr-3">
+                            <i class="fas fa-check-circle text-2xl"></i>
+                        </span>
+                        <span class="text-lg font-bold text-green-700">Sudah Diperiksa</span>
+                    </div>
+                    <ul class="list-none ml-8 text-green-900 text-base space-y-1">
+                        ${Object.entries(data.recap.verified).map(([kategori, jumlah]) => `
+                            <li>
+                                <span class="font-semibold">${kategori}</span>
+                                <span class="ml-2 px-2 py-1 bg-green-200 text-green-800 rounded-lg text-xs font-bold">${jumlah}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-xl p-6 shadow flex flex-col items-start">
+                    <div class="flex items-center mb-3">
+                        <span class="inline-flex items-center justify-center w-10 h-10 bg-yellow-400 text-white rounded-full mr-3">
+                            <i class="fas fa-exclamation-circle text-2xl"></i>
+                        </span>
+                        <span class="text-lg font-bold text-yellow-700">Belum Diperiksa</span>
+                    </div>
+                    <ul class="list-none ml-8 text-yellow-900 text-base space-y-1">
+                        ${Object.entries(data.recap.unverified).map(([kategori, jumlah]) => `
+                            <li>
+                                <span class="font-semibold">${kategori}</span>
+                                <span class="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 rounded-lg text-xs font-bold">${jumlah}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        document.getElementById("rekap-stokopname").innerHTML = html;
+    } else {
+        document.getElementById("rekap-stokopname").innerHTML = '';
+    }
                 
                 // Update unverified collections table
                 document.getElementById("unverified-collections").innerHTML = data.unverified_html || '<tr><td colspan="13" class="px-6 py-12 text-center text-gray-500"><i class="fas fa-check-circle text-4xl mb-4 text-green-300"></i><div class="text-lg font-medium">Semua koleksi sudah diperiksa</div></td></tr>';
@@ -568,49 +613,6 @@ session_start();
             });
         }
 
-        function loadRecapData() {
-            fetch('../stock_opname_api.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_recap' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    showAlert(data.message, 'error');
-                    return;
-                }
-                const recapContent = document.getElementById("recap-content");
-                recapContent.innerHTML = `
-                    <div class="bg-blue-100 p-6 rounded-xl shadow-lg flex items-center">
-                        <i class="fas fa-books text-4xl text-blue-600 mr-4"></i>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Total Koleksi</h3>
-                            <p class="text-2xl font-bold text-blue-600">${data.total_collections}</p>
-                        </div>
-                    </div>
-                    <div class="bg-yellow-100 p-6 rounded-xl shadow-lg flex items-center">
-                        <i class="fas fa-hourglass-half text-4xl text-yellow-600 mr-4"></i>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Koleksi Belum Diperiksa</h3>
-                            <p class="text-2xl font-bold text-yellow-600">${data.unverified_collections}</p>
-                        </div>
-                    </div>
-                    <div class="bg-green-100 p-6 rounded-xl shadow-lg flex items-center">
-                        <i class="fas fa-check-circle text-4xl text-green-600 mr-4"></i>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Koleksi Sudah Diperiksa</h3>
-                            <p class="text-2xl font-bold text-green-600">${data.verified_collections}</p>
-                        </div>
-                    </div>
-                `;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('Gagal memuat data rekapan.', 'error');
-            });
-        }
-
         function submitBarcode() {
             var barcode = document.getElementById("barcode").value.trim();
             if (!selectedProjectId || !barcode) {
@@ -682,16 +684,36 @@ session_start();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            selectedProjectId = localStorage.getItem('selectedProjectId');
+            if (selectedProjectId) {
+                selectedProjectId = Number(selectedProjectId); // pastikan number
+            } else {
+                selectedProjectId = null;
+            }
+        
             document.getElementById('barcode').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     submitBarcode();
                 }
             });
+        
+            // --- OPEN LAST ACTIVE TAB ---
+            let activeTab = localStorage.getItem('activeTab') || 'tab1';
+            if (activeTab === 'tab2' && selectedProjectId) {
+                document.getElementById("tab1").classList.add("hidden"); // Tambahkan ini!
+                document.getElementById("tab2").classList.remove("hidden");
+                document.getElementsByClassName("tablink")[1].classList.add("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
+                document.getElementsByClassName("tablink")[0].classList.remove("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
+                loadDetailData(selectedProjectId);
+                focusBarcodeInput();
+            } else {
+                document.getElementById("tab2").classList.add("hidden"); // Tambahkan ini!
+                document.getElementById("tab1").classList.remove("hidden");
+                document.getElementsByClassName("tablink")[0].classList.add("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
+                document.getElementsByClassName("tablink")[1].classList.remove("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
+            }
         });
 
-        // Open Tab 1 by default
-        document.getElementById("tab1").classList.remove("hidden");
-        document.getElementsByClassName("tablink")[0].classList.add("bg-gradient-to-r", "from-blue-600", "to-blue-700", "text-white", "shadow-md");
     </script>
 </body>
 </html>

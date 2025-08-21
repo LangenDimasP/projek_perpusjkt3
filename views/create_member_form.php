@@ -165,6 +165,26 @@ try {
                     <!-- Tab Content: Add Member -->
                     <div id="add-member" class="tab-content p-8">
                         <form id="memberForm" action="../create_member_api.php" method="POST" class="space-y-8">
+
+                        <div class="form-group">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+            Penentuan Nomor Anggota <span class="text-red-500">*</span>
+        </label>
+        <div class="flex space-x-4">
+            <label>
+                <input type="radio" name="MemberNoType" value="auto" checked> Otomatis
+            </label>
+            <label>
+                <input type="radio" name="MemberNoType" value="manual"> Manual
+            </label>
+        </div>
+    </div>
+    <div class="form-group" id="manualMemberNoGroup" style="display:none;">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+            Nomor Anggota Manual <span class="text-red-500">*</span>
+        </label>
+        <input type="text" name="ManualMemberNo" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm" placeholder="Masukkan nomor anggota manual">
+    </div>
                             <!-- Required Information Section -->
                             <div class="bg-blue-50 rounded-lg p-6">
                                 <div class="flex items-center mb-6">
@@ -417,6 +437,20 @@ try {
 </body>
         </main>
     </div>
+
+        <script>
+    // Tampilkan input manual jika dipilih
+    document.querySelectorAll('input[name="MemberNoType"]').forEach(el => {
+        el.addEventListener('change', function() {
+            document.getElementById('manualMemberNoGroup').style.display = (this.value === 'manual') ? '' : 'none';
+        });
+    });
+    
+    // Sinkronisasi nomor anggota manual ke nomor identitas
+    document.querySelector('input[name="ManualMemberNo"]').addEventListener('input', function() {
+        document.querySelector('input[name="IdentityNo"]').value = this.value;
+    });
+    </script>
 
     <script>
 // Initialize Feather Icons

@@ -518,13 +518,18 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
                             <td class="px-4 py-3 text-sm text-gray-500">${row.CountPerpanjang}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${row.DendaType}</td>
                             <td class="px-4 py-3 text-sm text-gray-500">${row.SuspendType}</td>
-                            <td class="px-4 py-3 text-sm font-medium space-x-2">
-                                <button onclick="selectJenis(${row.id}, 'kategori')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transition-all duration-300">
-                                    <i class="fas fa-tags mr-1"></i>Kategori
-                                </button>
-                                <button onclick="selectJenis(${row.id}, 'lokasi')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 transition-all duration-300">
-                                    <i class="fas fa-map-marker-alt mr-1"></i>Lokasi
-                                </button>
+                            <td class="px-4 py-3 text-sm font-medium">
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="selectJenis(${row.id}, 'kategori')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 transition-all duration-300">
+                                        <i class="fas fa-tags mr-1"></i>Kategori
+                                    </button>
+                                    <button onclick="selectJenis(${row.id}, 'lokasi')" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 transition-all duration-300">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>Lokasi
+                                    </button>
+                                    <button onclick="showEditMasaBerlaku(${row.id}, '${row.jenisanggota}', ${row.MasaBerlakuAnggota})" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-md text-white bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300">
+                                        <i class="fas fa-edit mr-1"></i>Edit Masa Berlaku
+                                    </button>
+                                </div>
                             </td>
                         </tr>`;
                 }
@@ -534,6 +539,51 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
         }
     };
     xhr.send();
+}
+function showEditMasaBerlaku(id, nama, masaBerlaku) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Edit Masa Berlaku: ${nama}</h2>
+            <label class="block mb-2 font-semibold text-gray-700">Masa Berlaku (hari):</label>
+            <input type="number" id="edit-masa-berlaku-input" class="w-full p-3 border rounded-lg mb-6" min="1" value="${masaBerlaku}">
+            <div class="flex justify-end space-x-2">
+                <button onclick="document.body.removeChild(this.closest('.fixed'))" class="px-4 py-2 rounded-lg bg-gray-300 text-gray-700 font-semibold">Batal</button>
+                <button onclick="submitEditMasaBerlaku(${id}, this)" class="px-4 py-2 rounded-lg bg-yellow-500 text-white font-semibold">Simpan</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function submitEditMasaBerlaku(id, btn) {
+    const input = document.getElementById('edit-masa-berlaku-input');
+    const masaBerlaku = input.value;
+    if (!masaBerlaku || masaBerlaku < 1) {
+        showNotification('Masa berlaku harus diisi dan minimal 1 hari!', false);
+        return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+    fetch('../jenis_anggota.api.php?action=edit_masa_berlaku', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, masa_berlaku: masaBerlaku })
+    })
+    .then(res => res.json())
+    .then(data => {
+        showNotification(data.message, data.success);
+        if (data.success) {
+            loadJenisTable();
+            document.body.removeChild(btn.closest('.fixed'));
+        }
+    })
+    .catch(() => showNotification('Gagal menyimpan masa berlaku!', false))
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = 'Simpan';
+    });
 }
 
 // Toggle logic for DendaType
@@ -913,15 +963,20 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
                 syncSelectAllLokasi();
             }, 300);
         };
-        // ...existing code...
 
         function loadSyncMemberTab() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '../jenis_anggota.api.php?action=get_members_need_default_sync', true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    var listDiv = document.getElementById('sync-member-list');
+                    var data;
+                    try {
+                        data = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        showNotification('Gagal mengambil data member. Silakan cek koneksi atau backend!', false);
+                        return;
+                    }
+            var listDiv = document.getElementById('sync-member-list');
                     var btn = document.getElementById('sync-member-btn');
                     listDiv.innerHTML = '';
                     if (data.success && data.members.length > 0) {
@@ -934,6 +989,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
                             '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Anggota</th>' +
                             '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Kategori</th>' +
                             '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Lokasi</th>' +
+                            '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Masa Berlaku</th>' + // Tambahkan kolom ini
                             '</tr>' +
                             '</thead>' +
                             '<tbody class="bg-white divide-y divide-gray-200">' +
@@ -956,6 +1012,11 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
                                             ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Sudah di-set</span>'
                                             : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Belum di-set</span>') +
                                     '</td>' +
+                                    '<td class="px-4 py-3 text-sm">' +
+                                        (m.masa_berlaku_not_match
+                                            ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Masa berlaku belum sesuai</span>'
+                                            : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Masa berlaku sesuai</span>') +
+                                    '</td>' +
                                 '</tr>';
                             }).join('') +
                             '</tbody></table></div>';
@@ -966,7 +1027,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
                                 '<i class="fas fa-check-circle text-3xl text-green-600"></i>' +
                             '</div>' +
                             '<h3 class="text-lg font-semibold text-gray-900 mb-2">Semua Member Sudah Tersinkronisasi</h3>' +
-                            '<p class="text-gray-600">Semua member sudah memiliki default koleksi dan lokasi sesuai jenis anggota.</p>' +
+                            '<p class="text-gray-600">Semua member sudah memiliki default koleksi, lokasi, dan masa berlaku sesuai jenis anggota.</p>' +
                         '</div>';
                         btn.classList.add('hidden');
                     }

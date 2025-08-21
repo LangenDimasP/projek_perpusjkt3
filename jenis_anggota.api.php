@@ -1,6 +1,6 @@
 <?php
-ini_set('display_errors', 0);
-error_reporting(0);
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 session_start();
 header('Content-Type: application/json');
 
@@ -225,25 +225,35 @@ case 'get_all_unsynced_members':
         // Ambil default
         $default_cats = [];
         $res = $mysqli->query("SELECT CollectionCategory_id FROM collectioncategorysdefault WHERE JenisAnggota_id = $jenis_id");
-        while ($cat = $res->fetch_assoc()) $default_cats[] = $cat['CollectionCategory_id'];
+        if ($res) {
+            while ($cat = $res->fetch_assoc()) $default_cats[] = $cat['CollectionCategory_id'];
+        }
         $default_locs = [];
         $res = $mysqli->query("SELECT Location_Library_id FROM location_library_default WHERE JenisAnggota_id = $jenis_id");
-        while ($loc = $res->fetch_assoc()) $default_locs[] = $loc['Location_Library_id'];
+        if ($res) {
+            while ($loc = $res->fetch_assoc()) $default_locs[] = $loc['Location_Library_id'];
+        }
         // Ambil data member (PERBAIKI DI SINI)
         $member_cats = [];
-        $res = $mysqli->query("SELECT CategoryLoan_id FROM memberloanauthorizecategory WHERE Member_id = $member_id");
-        while ($cat = $res->fetch_assoc()) $member_cats[] = $cat['CategoryLoan_id'];
+        $res = $mysqli->query("SELECT CategoryLoan_id FROM memberloanauthorizecategory WHERE Member_id = $mid");
+        if ($res) {
+            while ($cat = $res->fetch_assoc()) $member_cats[] = $cat['CategoryLoan_id'];
+        }
         $member_locs = [];
-        $res = $mysqli->query("SELECT LocationLoan_id FROM memberloanauthorizelocation WHERE Member_id = $member_id");
-        while ($loc = $res->fetch_assoc()) $member_locs[] = $loc['LocationLoan_id'];
+        $res = $mysqli->query("SELECT LocationLoan_id FROM memberloanauthorizelocation WHERE Member_id = $mid");
+        if ($res) {
+            while ($loc = $res->fetch_assoc()) $member_locs[] = $loc['LocationLoan_id'];
+        }
         // Cek apakah sudah sama
         if (array_diff($default_cats, $member_cats) || array_diff($default_locs, $member_locs)) {
+            $row['missing_default_categories'] = array_diff($default_cats, $member_cats);
+            $row['missing_default_locations'] = array_diff($default_locs, $member_locs);
             $members[] = $row;
         }
     }
     echo json_encode(['success' => true, 'members' => $members]);
     break;
-
+    
 case 'sync_all_members_with_default':
     $updated = 0;
     $failed = 0;
@@ -295,10 +305,28 @@ case 'sync_all_members_with_default':
             $sql = "INSERT IGNORE INTO memberloanauthorizelocation (Member_id, LocationLoan_id) VALUES ($member_id, $loc_id)";
             if ($mysqli->query($sql)) $updated++; else $failed++;
         }
+
+        // --- Tambahkan sinkronisasi masa berlaku di sini ---
+        // Ambil masa berlaku dari jenis anggota
+
+        $jenis = $mysqli->query("SELECT MasaBerlakuAnggota FROM jenis_anggota WHERE id = $jenis_id");
+        $masa_berlaku = 0;
+        if ($jenis && $jenis_row = $jenis->fetch_assoc()) {
+            $masa_berlaku = (int)$jenis_row['MasaBerlakuAnggota'];
+            // Ambil tanggal register anggota
+            $register_date_row = $mysqli->query("SELECT RegisterDate FROM members WHERE ID = $member_id");
+            $register_date = $register_date_row && ($r = $register_date_row->fetch_assoc()) ? $r['RegisterDate'] : null;
+            if ($register_date) {
+                $end_date = date('Y-m-d', strtotime($register_date . " +$masa_berlaku days"));
+                $sql = "UPDATE members SET EndDate = '$end_date' WHERE ID = $member_id"; // <-- Ganti ExpiredDate jadi EndDate
+                if ($mysqli->query($sql)) $updated++; else $failed++;
+            }
+        }
+        // --- END sinkronisasi masa berlaku ---
     }
     echo json_encode([
         'success' => true,
-        'message' => "Sinkronisasi selesai. $updated relasi berhasil ditambahkan/dihapus." . ($failed > 0 ? " $failed gagal." : "")
+        'message' => "Sinkronisasi selesai. $updated relasi/masa berlaku berhasil ditambahkan/dihapus." . ($failed > 0 ? " $failed gagal." : "")
     ]);
     break;
 
@@ -360,46 +388,93 @@ case 'sync_all_members_with_default':
         }
         break;
 
+        case 'edit_masa_berlaku':
+            $input = json_decode(file_get_contents('php://input'), true);
+            $id = isset($input['id']) ? (int)$input['id'] : 0;
+            $masa_berlaku = isset($input['masa_berlaku']) ? (int)$input['masa_berlaku'] : 0;
+            if ($id && $masa_berlaku > 0) {
+                $result = $mysqli->query("UPDATE jenis_anggota SET MasaBerlakuAnggota = $masa_berlaku WHERE id = $id");
+                if ($result) {
+                    echo json_encode(['success' => true, 'message' => 'Masa berlaku berhasil diupdate']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Gagal update masa berlaku']);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Data tidak valid']);
+            }
+            exit();
 
-
-
-    case 'get_members_need_default_sync':
-        $members = [];
-        $result = $mysqli->query("SELECT m.ID, m.MemberNo, m.Fullname, m.JenisAnggota_id, ja.jenisanggota AS JenisAnggota
-            FROM members m
-            LEFT JOIN jenis_anggota ja ON m.JenisAnggota_id = ja.id");
+case 'get_members_need_default_sync':
+    $members = [];
+    $result = $mysqli->query("SELECT m.ID, m.MemberNo, m.Fullname, m.JenisAnggota_id, m.EndDate, ja.jenisanggota AS JenisAnggota, m.RegisterDate
+        FROM members m
+        LEFT JOIN jenis_anggota ja ON m.JenisAnggota_id = ja.id");
+    if ($result) {
         while ($row = $result->fetch_assoc()) {
             $jenis_id = (int)$row['JenisAnggota_id'];
             $member_id = (int)$row['ID'];
             // Ambil default master
             $default_cats = [];
             $res = $mysqli->query("SELECT CollectionCategory_id FROM collectioncategorysdefault WHERE JenisAnggota_id = $jenis_id");
-            while ($cat = $res->fetch_assoc()) $default_cats[] = $cat['CollectionCategory_id'];
+            if ($res) {
+                while ($cat = $res->fetch_assoc()) $default_cats[] = $cat['CollectionCategory_id'];
+            }
             $default_locs = [];
             $res = $mysqli->query("SELECT Location_Library_id FROM location_library_default WHERE JenisAnggota_id = $jenis_id");
-            while ($loc = $res->fetch_assoc()) $default_locs[] = $loc['Location_Library_id'];
+            if ($res) {
+                while ($loc = $res->fetch_assoc()) $default_locs[] = $loc['Location_Library_id'];
+            }
             // Ambil relasi anggota dari tabel asli
             $member_cats = [];
             $res = $mysqli->query("SELECT CategoryLoan_id FROM memberloanauthorizecategory WHERE Member_id = $member_id");
-            while ($cat = $res->fetch_assoc()) $member_cats[] = $cat['CategoryLoan_id'];
+            if ($res) {
+                while ($cat = $res->fetch_assoc()) $member_cats[] = $cat['CategoryLoan_id'];
+            }
             $member_locs = [];
             $res = $mysqli->query("SELECT LocationLoan_id FROM memberloanauthorizelocation WHERE Member_id = $member_id");
-            while ($loc = $res->fetch_assoc()) $member_locs[] = $loc['LocationLoan_id'];
-            // Cek apakah default master dan relasi anggota SAMA PERSIS
+            if ($res) {
+                while ($loc = $res->fetch_assoc()) $member_locs[] = $loc['LocationLoan_id'];
+            }
+
+            // CEK MASA BERLAKU
+            $jenis = $mysqli->query("SELECT MasaBerlakuAnggota FROM jenis_anggota WHERE id = $jenis_id");
+            $masa_berlaku = 0;
+            if ($jenis && $jenis_row = $jenis->fetch_assoc()) {
+                $masa_berlaku = (int)$jenis_row['MasaBerlakuAnggota'];
+            }
+            $register_date = isset($row['RegisterDate']) ? $row['RegisterDate'] : null;
+            $expected_end = $register_date ? date('Y-m-d', strtotime($register_date . " +$masa_berlaku days")) : null;
+            $end_date = isset($row['EndDate']) ? $row['EndDate'] : null;
+
+            $masa_berlaku_not_match = false;
+            if ($expected_end && $end_date) {
+                // Samakan format tanggal
+                $expected_end_fmt = date('Y-m-d', strtotime($expected_end));
+                $end_date_fmt = date('Y-m-d', strtotime($end_date));
+                $masa_berlaku_not_match = ($expected_end_fmt != $end_date_fmt);
+            }
+
+            // Cek apakah default master dan relasi anggota SAMA PERSIS atau masa berlaku tidak match
             if (
                 array_diff($default_cats, $member_cats) ||
                 array_diff($member_cats, $default_cats) ||
                 array_diff($default_locs, $member_locs) ||
-                array_diff($member_locs, $default_locs)
+                array_diff($member_locs, $default_locs) ||
+                $masa_berlaku_not_match
             ) {
                 $row['missing_default_categories'] = array_diff($default_cats, $member_cats);
                 $row['missing_default_locations'] = array_diff($default_locs, $member_locs);
+                $row['masa_berlaku_not_match'] = $masa_berlaku_not_match;
+                $row['expected_end'] = $expected_end;
+                $row['end_date'] = $end_date;
                 $members[] = $row;
             }
         }
-        echo json_encode(['success' => true, 'members' => $members]);
-        break;
-}
+    }
+    echo json_encode(['success' => true, 'members' => $members]);
+    break;
+
+    }
 
 $mysqli->close();
 ?>

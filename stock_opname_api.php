@@ -101,21 +101,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Calculate pagination for unverified collections
             $unverified_offset = ($unverified_page - 1) * ($unverified_limit === 'all' ? PHP_INT_MAX : $unverified_limit);
             $query = "
-                SELECT COUNT(*) as total
-                FROM collections c
-                WHERE NOT EXISTS (
-                    SELECT 1 
-                    FROM stockopnamedetail sod
-                    WHERE sod.CollectionID = c.ID
-                )
-            ";
-            if ($category_id !== null) {
-                $query .= " AND c.Category_id = ?";
-            }
-            $stmt = $mysqli->prepare($query);
-            if ($category_id !== null) {
-                $stmt->bind_param("i", $category_id);
-            }
+    SELECT COUNT(*) as total
+    FROM collections c
+    WHERE NOT EXISTS (
+        SELECT 1 
+        FROM stockopnamedetail sod
+        WHERE sod.CollectionID = c.ID AND sod.StockOpnameID = ?
+    )
+";
+if ($category_id !== null) {
+    $query .= " AND c.Category_id = ?";
+}
+$stmt = $mysqli->prepare($query);
+if ($category_id !== null) {
+    $stmt->bind_param("ii", $project_id, $category_id);
+} else {
+    $stmt->bind_param("i", $project_id);
+}
             $stmt->execute();
             $unverified_total = $stmt->get_result()->fetch_assoc()['total'];
             $stmt->close();
@@ -123,38 +125,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Get unverified collections
             $query = "
-                SELECT DISTINCT c.NomorBarcode, c.TanggalPengadaan, c.NoInduk, c.CallNumber, 
-                       m.Name AS Media, s.Name AS Source, cat.Name AS Category, r.Name AS Akses, 
-                       st.Name AS Status, ll.Name AS LokasiPerpustakaan, l.Name AS Lokasi, c.ISOPAC
-                FROM collections c
-                LEFT JOIN collectionmedias m ON c.Media_id = m.ID
-                LEFT JOIN collectionsources s ON c.Source_id = s.ID
-                LEFT JOIN collectioncategorys cat ON c.Category_id = cat.ID
-                LEFT JOIN collectionrules r ON c.Rule_id = r.ID
-                LEFT JOIN collectionstatus st ON c.Status_id = st.ID
-                LEFT JOIN location_library ll ON c.Location_Library_id = ll.ID
-                LEFT JOIN locations l ON c.Location_id = l.ID
-                WHERE NOT EXISTS (
-                    SELECT 1 
-                    FROM stockopnamedetail sod
-                    WHERE sod.CollectionID = c.ID
-                )
-            ";
-            if ($category_id !== null) {
-                $query .= " AND c.Category_id = ?";
-            }
-            $query .= " ORDER BY c.NomorBarcode ASC";
-            if ($unverified_limit !== 'all') {
-                $query .= " LIMIT ? OFFSET ?";
-            }
-            $stmt = $mysqli->prepare($query);
-            if ($category_id !== null && $unverified_limit !== 'all') {
-                $stmt->bind_param("iii", $category_id, $unverified_limit, $unverified_offset);
-            } elseif ($category_id !== null) {
-                $stmt->bind_param("i", $category_id);
-            } elseif ($unverified_limit !== 'all') {
-                $stmt->bind_param("ii", $unverified_limit, $unverified_offset);
-            }
+    SELECT DISTINCT c.NomorBarcode, c.TanggalPengadaan, c.NoInduk, c.CallNumber, 
+           m.Name AS Media, s.Name AS Source, cat.Name AS Category, r.Name AS Akses, 
+           st.Name AS Status, ll.Name AS LokasiPerpustakaan, l.Name AS Lokasi, c.ISOPAC
+    FROM collections c
+    LEFT JOIN collectionmedias m ON c.Media_id = m.ID
+    LEFT JOIN collectionsources s ON c.Source_id = s.ID
+    LEFT JOIN collectioncategorys cat ON c.Category_id = cat.ID
+    LEFT JOIN collectionrules r ON c.Rule_id = r.ID
+    LEFT JOIN collectionstatus st ON c.Status_id = st.ID
+    LEFT JOIN location_library ll ON c.Location_Library_id = ll.ID
+    LEFT JOIN locations l ON c.Location_id = l.ID
+    WHERE NOT EXISTS (
+        SELECT 1 
+        FROM stockopnamedetail sod
+        WHERE sod.CollectionID = c.ID AND sod.StockOpnameID = ?
+    )
+";
+if ($category_id !== null) {
+    $query .= " AND c.Category_id = ?";
+}
+$query .= " ORDER BY c.NomorBarcode ASC";
+if ($unverified_limit !== 'all') {
+    $query .= " LIMIT ? OFFSET ?";
+}
+$stmt = $mysqli->prepare($query);
+if ($category_id !== null && $unverified_limit !== 'all') {
+    $stmt->bind_param("iiii", $project_id, $category_id, $unverified_limit, $unverified_offset);
+} elseif ($category_id !== null) {
+    $stmt->bind_param("ii", $project_id, $category_id);
+} elseif ($unverified_limit !== 'all') {
+    $stmt->bind_param("iii", $project_id, $unverified_limit, $unverified_offset);
+} else {
+    $stmt->bind_param("i", $project_id);
+}
             $stmt->execute();
             $result = $stmt->get_result();
             $unverified_html = "";
@@ -202,6 +206,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $results_total = $stmt->get_result()->fetch_assoc()['total'];
             $stmt->close();
+
+            $verified_recap = [];
+$query_verified = "
+    SELECT cat.Name AS Category, COUNT(*) AS jumlah
+    FROM stockopnamedetail sod
+    LEFT JOIN collections c ON sod.CollectionID = c.ID
+    LEFT JOIN collectioncategorys cat ON c.Category_id = cat.ID
+    WHERE sod.StockOpnameID = ?
+    GROUP BY cat.Name
+";
+$stmt = $mysqli->prepare($query_verified);
+$stmt->bind_param("i", $project_id);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $verified_recap[$row['Category'] ?: 'Tanpa Kategori'] = (int)$row['jumlah'];
+}
+$stmt->close();
+
+// --- REKAP BELUM DIPERIKSA (UNVERIFIED) PER KATEGORI ---
+$unverified_recap = [];
+$query_unverified = "
+    SELECT cat.Name AS Category, COUNT(*) AS jumlah
+    FROM collections c
+    LEFT JOIN collectioncategorys cat ON c.Category_id = cat.ID
+    WHERE NOT EXISTS (
+        SELECT 1 FROM stockopnamedetail sod
+        WHERE sod.CollectionID = c.ID AND sod.StockOpnameID = ?
+    )
+";
+if ($category_id !== null) {
+    $query_unverified .= " AND c.Category_id = ?";
+}
+$query_unverified .= " GROUP BY cat.Name";
+if ($category_id !== null) {
+    $stmt = $mysqli->prepare($query_unverified);
+    $stmt->bind_param("ii", $project_id, $category_id);
+} else {
+    $stmt = $mysqli->prepare($query_unverified);
+    $stmt->bind_param("i", $project_id);
+}
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $unverified_recap[$row['Category'] ?: 'Tanpa Kategori'] = (int)$row['jumlah'];
+}
+$stmt->close();
+
             $results_total_pages = $results_limit === 'all' ? 1 : ceil($results_total / $results_limit);
 
             // Get stock opname results
@@ -268,53 +320,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
 
             echo json_encode([
-                'project_name' => $project['ProjectName'],
-                'tahun' => $project['Tahun'],
-                'unverified_html' => $unverified_html,
-                'unverified_count' => $unverified_total,
-                'unverified_total_pages' => $unverified_total_pages,
-                'results_html' => $results_html,
-                'results_count' => $results_total,
-                'results_total_pages' => $results_total_pages
-            ]);
+    'project_name' => $project['ProjectName'],
+    'tahun' => $project['Tahun'],
+    'unverified_html' => $unverified_html,
+    'unverified_count' => $unverified_total,
+    'unverified_total_pages' => $unverified_total_pages,
+    'results_html' => $results_html,
+    'results_count' => $results_total,
+    'results_total_pages' => $results_total_pages,
+    // --- TAMBAHKAN REKAP DI RESPONSE ---
+    'recap' => [
+        'verified' => $verified_recap,
+        'unverified' => $unverified_recap
+    ]
+]);
             break;
 
-        case 'get_recap':
-            // Total collections
-            $stmt = $mysqli->prepare("SELECT COUNT(*) as total FROM collections");
-            $stmt->execute();
-            $total_collections = $stmt->get_result()->fetch_assoc()['total'];
-            $stmt->close();
 
-            // Unverified collections
-            $stmt = $mysqli->prepare("
-                SELECT COUNT(*) as total
-                FROM collections c
-                WHERE NOT EXISTS (
-                    SELECT 1 
-                    FROM stockopnamedetail sod
-                    WHERE sod.CollectionID = c.ID
-                )
-            ");
-            $stmt->execute();
-            $unverified_collections = $stmt->get_result()->fetch_assoc()['total'];
-            $stmt->close();
-
-            // Verified collections (across all projects)
-            $stmt = $mysqli->prepare("
-                SELECT COUNT(DISTINCT CollectionID) as total
-                FROM stockopnamedetail
-            ");
-            $stmt->execute();
-            $verified_collections = $stmt->get_result()->fetch_assoc()['total'];
-            $stmt->close();
-
-            echo json_encode([
-                'total_collections' => $total_collections,
-                'unverified_collections' => $unverified_collections,
-                'verified_collections' => $verified_collections
-            ]);
-            break;
 
         case 'submit_barcode':
             error_reporting(0);
