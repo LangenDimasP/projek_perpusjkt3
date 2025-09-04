@@ -336,6 +336,35 @@ $stmt->close();
 ]);
             break;
 
+                    case 'get_recap':
+                        // Hitung total koleksi
+                        $total_collections = 0;
+                        $verified_collections = 0;
+                        $unverified_collections = 0;
+            
+                        // Total semua koleksi
+                        $result = $mysqli->query("SELECT COUNT(*) as total FROM collections");
+                        if ($result) {
+                            $total_collections = (int)$result->fetch_assoc()['total'];
+                            $result->free();
+                        }
+            
+                        // Total koleksi yang sudah diperiksa (distinct CollectionID di stockopnamedetail)
+                        $result = $mysqli->query("SELECT COUNT(DISTINCT CollectionID) as total FROM stockopnamedetail");
+                        if ($result) {
+                            $verified_collections = (int)$result->fetch_assoc()['total'];
+                            $result->free();
+                        }
+            
+                        // Total koleksi yang belum diperiksa
+                        $unverified_collections = $total_collections - $verified_collections;
+            
+                        echo json_encode([
+                            'total_collections' => $total_collections,
+                            'verified_collections' => $verified_collections,
+                            'unverified_collections' => $unverified_collections
+                        ]);
+                        break;
 
 
         case 'submit_barcode':

@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const naikKelasContent = document.getElementById('naik-kelas-content');
     const beriKelasContent = document.getElementById('beri-kelas-content');
 
-    const BASE_URL = '../';  // Untuk navigasi ke folder utama
+    const BASE_URL = '../api/';  // Untuk navigasi ke folder utama
     const API_URL = `${BASE_URL}api.php`;  // Gabungkan dengan nama file API
     let debounceTimer;
     let kelasDebounceTimer;

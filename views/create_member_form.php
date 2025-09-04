@@ -164,7 +164,7 @@ try {
                     
                     <!-- Tab Content: Add Member -->
                     <div id="add-member" class="tab-content p-8">
-                        <form id="memberForm" action="../create_member_api.php" method="POST" class="space-y-8">
+                        <form id="memberForm" action="../api/create_member_api.php" method="POST" class="space-y-8">
 
                         <div class="form-group">
         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -506,7 +506,7 @@ document.getElementById('memberForm').addEventListener('submit', function(e) {
     feather.replace();
 
     const formData = new FormData(this);
-    fetch('../create_member_api.php', {
+    fetch('../api/create_member_api.php', {
         method: 'POST',
         body: formData,
         headers: {

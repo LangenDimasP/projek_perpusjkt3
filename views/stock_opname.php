@@ -81,7 +81,7 @@ session_start();
                             }
                             ?>
                             
-                            <form action="../stock_opname_api.php" method="POST" class="space-y-6">
+                            <form action="../api/stock_opname_api.php" method="POST" class="space-y-6">
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div class="space-y-2">
                                         <label class="block text-gray-700 font-semibold flex items-center">
@@ -465,7 +465,7 @@ session_start();
             const resultsLimit = document.getElementById('results-limit').value;
             const categoryFilter = selectedCategory;
 
-            fetch('../stock_opname_api.php', {
+            fetch('../api/stock_opname_api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -625,7 +625,7 @@ session_start();
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
             submitBtn.disabled = true;
 
-            fetch('../stock_opname_api.php', {
+            fetch('../api/stock_opname_api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'submit_barcode', project_id: selectedProjectId, barcode: barcode })

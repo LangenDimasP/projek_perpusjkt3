@@ -75,7 +75,7 @@ if(isset($_SESSION['user_id'])) {
         }
         document.getElementById('login-btn').disabled = true;
         try {
-            const response = await fetch('api.php', {
+            const response = await fetch('api/api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'login', username, password })

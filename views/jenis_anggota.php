@@ -485,7 +485,7 @@ $locationLibraries = $mysqli->query("SELECT * FROM location_library");
         // Fetch and render jenis anggota table
         function loadJenisTable() {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '../jenis_anggota.api.php?action=get_jenis', true);
+    xhr.open('GET', '../api/jenis_anggota.api.php?action=get_jenis', true);
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4 && xhr.status == 200) {
             var data = JSON.parse(xhr.responseText);
@@ -566,7 +566,7 @@ function submitEditMasaBerlaku(id, btn) {
     }
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
-    fetch('../jenis_anggota.api.php?action=edit_masa_berlaku', {
+    fetch('../api/jenis_anggota.api.php?action=edit_masa_berlaku', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id, masa_berlaku: masaBerlaku })
@@ -742,7 +742,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
         // Fetch defaults
         function fetchDefaults(id) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '../jenis_anggota.api.php?action=get_defaults&jenis_id=' + id, true);
+            xhr.open('GET', '../api/jenis_anggota.api.php?action=get_defaults&jenis_id=' + id, true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data = JSON.parse(xhr.responseText);
@@ -809,7 +809,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
     }
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', '../jenis_anggota.api.php?action=add', true);
+    xhr.open('POST', '../api/jenis_anggota.api.php?action=add', true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -869,7 +869,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
             };
         
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', '../jenis_anggota.api.php?action=save_kategori_defaults', true);
+            xhr.open('POST', '../api/jenis_anggota.api.php?action=save_kategori_defaults', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
@@ -903,7 +903,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
             };
         
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', '../jenis_anggota.api.php?action=save_lokasi_defaults', true);
+            xhr.open('POST', '../api/jenis_anggota.api.php?action=save_lokasi_defaults', true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
@@ -966,7 +966,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
 
         function loadSyncMemberTab() {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '../jenis_anggota.api.php?action=get_members_need_default_sync', true);
+            xhr.open('GET', '../api/jenis_anggota.api.php?action=get_members_need_default_sync', true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     var data;
@@ -1056,7 +1056,7 @@ if (document.querySelector('.SuspendTypeRadio[value="Konstan"]').checked) {
                 btn.onclick = function() {
                     btn.disabled = true;
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
-                    fetch('../jenis_anggota.api.php?action=sync_all_members_with_default')
+                    fetch('../api/jenis_anggota.api.php?action=sync_all_members_with_default')
                         .then(res => res.json())
                         .then(data => {
                             showNotification(data.message, data.success);

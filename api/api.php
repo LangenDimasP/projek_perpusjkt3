@@ -38,14 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $searchQuery = isset($_GET['query']) ? $_GET['query'] : '';
             $sql = "SELECT id, namakelassiswa FROM kelas_siswa";
             
+
             if (!empty($searchQuery)) {
                 $searchQuery = '%' . $mysqli->real_escape_string($searchQuery) . '%';
-                $stmt = $mysqli->prepare("SELECT id, namakelassiswa FROM kelas_siswa WHERE namakelassiswa LIKE ? ORDER BY namakelassiswa ASC LIMIT 10");
+                $stmt = $mysqli->prepare("SELECT id, namakelassiswa FROM kelas_siswa WHERE namakelassiswa LIKE ? ORDER BY namakelassiswa ASC");
                 $stmt->bind_param("s", $searchQuery);
                 $stmt->execute();
                 $result = $stmt->get_result();
             } else {
-                $result = $mysqli->query("SELECT id, namakelassiswa FROM kelas_siswa ORDER BY namakelassiswa ASC LIMIT 10");
+                $result = $mysqli->query("SELECT id, namakelassiswa FROM kelas_siswa ORDER BY namakelassiswa ASC");
             }
             
             $data = $result->fetch_all(MYSQLI_ASSOC);

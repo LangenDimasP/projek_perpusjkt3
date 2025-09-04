@@ -175,30 +175,26 @@ $mysqli->close();
                     </div>
                 </div>
 
-                <!-- Charts Grid -->
+                <!-- Charts Grid: Dua kolom untuk chart lain -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Bar Chart: Students per Class -->
                     <div class="bg-white rounded-2xl shadow-xl p-6 h-96">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Jumlah Siswa per Kelas (Top 5)</h3>
-                        <canvas id="polar-chart"></canvas>  <!-- Changed from bar-chart to polar-chart -->
+                        <canvas id="polar-chart"></canvas>
                     </div>
-
+                
                     <!-- Pie Chart: Collection Categories -->
                     <div class="bg-white rounded-2xl shadow-xl p-6 h-96">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribusi Kategori Koleksi</h3>
                         <canvas id="radar-chart"></canvas>
                     </div>
-
-                    <!-- Doughnut Chart: Stock Opname Status -->
-                    <div class="bg-white rounded-2xl shadow-xl p-6 h-96">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Stock Opname</h3>
-                        <canvas id="doughnut-chart"></canvas>
-                    </div>
-
-                    <!-- Line Chart: Stock Opname Progress -->
-                    <div class="bg-white rounded-2xl shadow-xl p-6 h-96">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Progres Stock Opname (7 Hari Terakhir)</h3>
-                        <canvas id="line-chart"></canvas>
+                </div>
+                
+                <!-- Chart Progres Stock Opname 7 Hari: Full Width -->
+                <div class="bg-white rounded-2xl shadow-xl p-6 h-96 w-full mt-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Progres Stock Opname (7 Hari Terakhir)</h3>
+                    <div style="position:relative;width:100%;height:100%;">
+                        <canvas id="line-chart" style="width:100%;height:100%;"></canvas>
                     </div>
                 </div>
             </div>
@@ -208,37 +204,7 @@ $mysqli->close();
     <script>
         // Ensure charts are initialized before fetching data
         window.onload = function() {
-            // Debug: Log all Chart.js instances
-            console.log('Chart instances:', Chart.instances);
 
-            // Fetch stock opname data for Doughnut Chart
-            fetch('stock_opname_api.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_recap' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    showAlert(data.message, 'error');
-                    return;
-                }
-                // Update Total Collections card
-                document.getElementById('total-collections').textContent = data.total_collections || 0;
-
-                // Update Doughnut Chart
-                const doughnutChart = Chart.getChart('doughnut-chart');
-                if (doughnutChart) {
-                    doughnutChart.data.datasets[0].data = [
-                        data.verified_collections || 0,
-                        data.unverified_collections || 0
-                    ];
-                    doughnutChart.update();
-                } else {
-                    console.error('Doughnut Chart not found');
-                    showAlert('Gagal memuat grafik status stock opname.', 'error');
-                }
-            })
             .catch(error => {
                 console.error('Fetch error:', error);
                 showAlert('Gagal memuat data stock opname.', 'error');
@@ -393,34 +359,6 @@ $mysqli->close();
                 }
             });
         
-            // Initialize Doughnut Chart
-            const doughnutChart = new Chart(document.getElementById('doughnut-chart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ["Sudah Diperiksa", "Belum Diperiksa"],
-                    datasets: [{
-                        label: "Status Koleksi",
-                        data: [0, 0],
-                        backgroundColor: ["#10B981", "#F59E0B"],
-                        borderColor: ["#ffffff", "#ffffff"],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    ...commonOptions,
-                    cutout: '60%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 15,
-                                boxWidth: 12,
-                                font: { size: 11 }
-                            }
-                        }
-                    }
-                }
-            });
         
             // Initialize Line Chart
             new Chart(document.getElementById('line-chart'), {
